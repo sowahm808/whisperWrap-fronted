@@ -1,0 +1,4 @@
+html, body, app-root, ion-app { height: 100%; }
+body { margin: 0; font-family: Arial, sans-serif; }
+.form-card { padding: 1rem; max-width: 720px; margin: 0 auto; }
+.error-text { color: #b00020; font-size: 0.875rem; }
