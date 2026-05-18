@@ -1,0 +1,3 @@
+import { Component } from '@angular/core'; import { RouterLink } from '@angular/router'; import { IonContent,IonHeader,IonTitle,IonToolbar,IonButton,IonCard,IonCardContent } from '@ionic/angular/standalone';
+@Component({standalone:true,imports:[RouterLink,IonContent,IonHeader,IonTitle,IonToolbar,IonButton,IonCard,IonCardContent],template:`<ion-header><ion-toolbar><ion-title>WhisperWrap Sent</ion-title></ion-toolbar></ion-header><ion-content><ion-card class='form-card'><ion-card-content><p>Consent email has been sent. Track status from your dashboard.</p><ion-button expand='block' routerLink='/dashboard'>Back to Dashboard</ion-button></ion-card-content></ion-card></ion-content>`})
+export class WhisperSentPage{}
