@@ -1,0 +1,62 @@
+# Compiled output
+/dist
+/out-tsc
+
+# Node modules
+/node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and Editors
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Angular cache
+.angular/cache
+
+# Environment files
+src/environments/environment.ts
+src/environments/environment.prod.ts
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Capacitor
+android/.gradle/
+android/build/
+android/app/build/
+ios/App/build/
+
+# Coverage reports
+/coverage
+
+# Temporary files
+tmp/
+temp/
+
+# Local Netlify files
+.netlify
+
+# Firebase service accounts
+serviceAccountKey.json
+firebase-adminsdk*.json
+
+# Build artifacts
+*.tgz
+
+# Misc
+.cache
