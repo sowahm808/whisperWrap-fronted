@@ -11,6 +11,7 @@ import {
 } from '@angular/fire/auth';
 import { Firestore, doc, onSnapshot, serverTimestamp, setDoc } from '@angular/fire/firestore';
 import { Observable, from, of } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { UserProfile } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +39,7 @@ export class AuthService {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
+        await credential.user.getIdToken(true);
 
         return credential;
       }),
@@ -95,6 +97,48 @@ export class AuthService {
 
   async token() {
     const user = await this.waitForUser();
-    return user?.getIdToken() ?? '';
+    if (!user) return '';
+
+    const token = await user.getIdToken();
+
+    if (this.isFirebaseIdToken(token)) {
+      return token;
+    }
+
+    const refreshedToken = await user.getIdToken(true);
+
+    if (!this.isFirebaseIdToken(refreshedToken)) {
+      throw new Error('Could not verify your sign-in session. Please log out and sign in again.');
+    }
+
+    return refreshedToken;
+  }
+
+  private isFirebaseIdToken(token: string) {
+    const payload = this.decodeTokenPayload(token);
+
+    if (!payload) return false;
+
+    const expectedIssuer = `https://securetoken.google.com/${environment.firebase.projectId}`;
+    const customTokenAudience = 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
+
+    return payload['iss'] === expectedIssuer && payload['aud'] === environment.firebase.projectId && payload['aud'] !== customTokenAudience;
+  }
+
+  private decodeTokenPayload(token: string): Record<string, unknown> | null {
+    const payload = token.split('.')[1];
+
+    if (!payload) return null;
+
+    try {
+      const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
+      const decodedPayload = atob(paddedPayload);
+      const parsedPayload: unknown = JSON.parse(decodedPayload);
+
+      return typeof parsedPayload === 'object' && parsedPayload !== null ? (parsedPayload as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
   }
 }
