@@ -202,7 +202,9 @@ export class ReviewWhisperPage {
 
     try {
       const user = await this.auth.waitForUser();
-      const senderName = draft.senderName || user?.displayName || user?.email || 'Sender';
+      if (!user) throw new Error('Please log in before sending consent.');
+
+      const senderName = draft.senderName || user.displayName || user.email || 'Sender';
       const whisperId = await this.service.saveDraftToFirestore({ ...draft, senderName, status: 'generated' });
       const sendPayload = { ...draft, id: whisperId, senderName };
 
