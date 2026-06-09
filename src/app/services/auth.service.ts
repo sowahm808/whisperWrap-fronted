@@ -3,13 +3,14 @@ import {
   Auth,
   User,
   authState,
+  onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from '@angular/fire/auth';
 import { Firestore, doc, onSnapshot, serverTimestamp, setDoc } from '@angular/fire/firestore';
-import { Observable, firstValueFrom, from, of } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { UserProfile } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -52,7 +53,27 @@ export class AuthService {
   }
 
   waitForUser(): Promise<User | null> {
-    return firstValueFrom(this.user$);
+    if (this.auth.currentUser) {
+      return Promise.resolve(this.auth.currentUser);
+    }
+
+    return new Promise(resolve => {
+      let settled = false;
+      let unsubscribe = () => {};
+      let timeout: ReturnType<typeof setTimeout>;
+
+      const settle = (user: User | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve(user);
+      };
+
+      timeout = setTimeout(() => settle(this.auth.currentUser), 5000);
+      unsubscribe = onAuthStateChanged(this.auth, settle, () => settle(this.auth.currentUser));
+      if (settled) unsubscribe();
+    });
   }
 
   userProfile$(uid: string): Observable<UserProfile | null> {

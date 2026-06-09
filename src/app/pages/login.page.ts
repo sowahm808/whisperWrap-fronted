@@ -1,5 +1,5 @@
 import { NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -93,6 +93,7 @@ export class LoginPage {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
+    private zone: NgZone,
   ) {}
 
   get emailMessage() {
@@ -121,12 +122,18 @@ export class LoginPage {
     this.isSubmitting = true;
     this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
       next: () => {
-        this.blurActiveElement();
-        this.router.navigateByUrl('/dashboard');
+        this.zone.run(() => {
+          this.blurActiveElement();
+          void this.router.navigateByUrl('/dashboard').finally(() => {
+            this.isSubmitting = false;
+          });
+        });
       },
       error: e => {
-        this.error = getAuthErrorMessage(e);
-        this.isSubmitting = false;
+        this.zone.run(() => {
+          this.error = getAuthErrorMessage(e);
+          this.isSubmitting = false;
+        });
       },
     });
   }

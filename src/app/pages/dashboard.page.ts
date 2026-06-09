@@ -49,11 +49,11 @@ import { UserProfile, WhisperRecord } from '../services/models';
         <ion-card class="form-card">
           <ion-card-content>
             <p><strong>Subscription:</strong> {{ subscriptionStatus }}</p>
-            <ion-text *ngIf="subscriptionStatus !== 'active'" color="danger">
-              Active subscription required to send WhisperWraps. Ask support to activate your profile.
+            <ion-text *ngIf="subscriptionStatus !== 'active'" color="medium">
+              You can draft a WhisperWrap now. Sending may still require account activation.
             </ion-text>
 
-            <ion-button expand="block" [disabled]="subscriptionStatus !== 'active'" routerLink="/create-whisper">
+            <ion-button expand="block" routerLink="/create-whisper">
               Create WhisperWrap
             </ion-button>
             <ion-button fill="clear" expand="block" (click)="logout()">Logout</ion-button>
