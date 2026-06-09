@@ -13,6 +13,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/angular/standalone";
+import { getAuthErrorMessage } from "../services/auth-errors";
 import { AuthService } from "../services/auth.service";
 
 @Component({
@@ -90,7 +91,7 @@ export class LoginPage {
           this.blurActiveElement();
           this.router.navigateByUrl("/dashboard");
         },
-        error: (e) => (this.error = e.message),
+        error: (e) => (this.error = getAuthErrorMessage(e)),
       });
   }
 
