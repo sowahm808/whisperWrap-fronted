@@ -23,7 +23,11 @@ Angular + Ionic standalone frontend for WhisperWrap MVP, integrated with Firebas
    npm install
    ```
 2. Update `src/environments/environment.ts` with Firebase config and backend URL.
-3. Ensure backend env vars are configured:
+3. In the Firebase console, enable email/password account creation:
+   - Go to **Authentication** > **Sign-in method**.
+   - Open **Email/Password** and enable the provider.
+   - Save the change before testing signup. If this provider is disabled, Firebase returns `auth/operation-not-allowed` / `OPERATION_NOT_ALLOWED` when the app calls `createUserWithEmailAndPassword`.
+4. Ensure backend env vars are configured:
    - OPENAI_API_KEY
    - FIREBASE_PROJECT_ID
    - FIREBASE_CLIENT_EMAIL
@@ -31,7 +35,7 @@ Angular + Ionic standalone frontend for WhisperWrap MVP, integrated with Firebas
    - SENDGRID_API_KEY
    - FROM_EMAIL
    - APP_BASE_URL
-4. Run frontend:
+5. Run frontend:
    ```bash
    npm start
    ```

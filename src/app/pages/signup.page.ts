@@ -14,6 +14,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/angular/standalone";
+import { getAuthErrorMessage } from "../services/auth-errors";
 import { AuthService } from "../services/auth.service";
 
 @Component({
@@ -147,7 +148,7 @@ export class SignupPage {
           this.router.navigateByUrl("/dashboard");
         },
         error: (e) => {
-          this.error = e.message;
+          this.error = getAuthErrorMessage(e);
           this.isSubmitting = false;
         },
       });
