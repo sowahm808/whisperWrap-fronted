@@ -91,7 +91,20 @@ export class WhisperService {
   private handleError(error: unknown): Observable<never> {
     if (error instanceof HttpErrorResponse) {
       const backendMessage = typeof error.error?.message === 'string' ? error.error.message : '';
-      return throwError(() => new Error(backendMessage || 'WhisperWrap service is unavailable. Please try again.'));
+
+      if (backendMessage) {
+        return throwError(() => new Error(backendMessage));
+      }
+
+      if (error.status === 401) {
+        return throwError(() => new Error('Please log in again before generating a WhisperWrap.'));
+      }
+
+      if (error.status === 403) {
+        return throwError(() => new Error('Your account is not authorized to generate a WhisperWrap yet. Please check your subscription status.'));
+      }
+
+      return throwError(() => new Error('WhisperWrap service is unavailable. Please try again.'));
     }
 
     return throwError(() => new Error('Something went wrong. Please try again.'));

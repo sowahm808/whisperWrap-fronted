@@ -92,6 +92,7 @@ export class AuthService {
   }
 
   async token() {
-    return this.auth.currentUser?.getIdToken() ?? '';
+    const user = await this.waitForUser();
+    return user?.getIdToken() ?? '';
   }
 }

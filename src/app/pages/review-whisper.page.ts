@@ -123,13 +123,21 @@ export class ReviewWhisperPage {
     if (this.service.draft) this.service.setDraft(this.service.draft);
   }
 
-  regenerate() {
+  async regenerate() {
     const draft = this.service.draft;
     if (!draft || this.isBusy) return;
 
     this.error = '';
     this.notice = '';
     this.isRegenerating = true;
+
+    const user = await this.auth.waitForUser();
+
+    if (!user) {
+      this.error = 'Please log in before regenerating a WhisperWrap.';
+      this.isRegenerating = false;
+      return;
+    }
 
     const payload: WhisperInput = {
       recipientName: draft.recipientName,
