@@ -1,12 +1,13 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: 'YOUR_FIREBASE_API_KEY',
-    authDomain: 'YOUR_FIREBASE_AUTH_DOMAIN',
-    projectId: 'YOUR_FIREBASE_PROJECT_ID',
-    storageBucket: 'YOUR_FIREBASE_STORAGE_BUCKET',
-    messagingSenderId: 'YOUR_FIREBASE_MESSAGING_SENDER_ID',
-    appId: 'YOUR_FIREBASE_APP_ID'
+    apiKey: 'AIzaSyCQMMHkbtTNWQXDNklH4GycofNFfjabBGA',
+    authDomain: 'whisperwrap-3eef5.firebaseapp.com',
+    projectId: 'whisperwrap-3eef5',
+    storageBucket: 'whisperwrap-3eef5.firebasestorage.app',
+    messagingSenderId: '808535622537',
+    appId: '1:808535622537:web:e8451c81189f968f999758',
+    measurementId: 'G-XQFQ4VL6ER'
   },
   backendUrl: 'https://whisperwrap-backend.onrender.com'
 };
