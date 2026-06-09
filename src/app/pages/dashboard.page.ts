@@ -1,3 +1,141 @@
-import { AsyncPipe } from '@angular/common'; import { Component } from '@angular/core'; import { Router, RouterLink } from '@angular/router'; import { IonContent,IonHeader,IonTitle,IonToolbar,IonButton,IonCard,IonCardContent,IonText } from '@ionic/angular/standalone'; import { AuthService } from '../services/auth.service';
-@Component({standalone:true,imports:[AsyncPipe,RouterLink,IonContent,IonHeader,IonTitle,IonToolbar,IonButton,IonCard,IonCardContent,IonText],template:`<ion-header><ion-toolbar><ion-title>Dashboard</ion-title></ion-toolbar></ion-header><ion-content><ion-card class='form-card'><ion-card-content><p>Welcome to WhisperWrap MVP.</p><ion-text *ngIf='subscriptionStatus!="active"' color='danger'>Subscription inactive. Contact support to activate.</ion-text><ion-button expand='block' [disabled]='subscriptionStatus!=="active"' routerLink='/create-whisper'>Create WhisperWrap</ion-button><ion-button fill='clear' expand='block' (click)='logout()'>Logout</ion-button></ion-card-content></ion-card></ion-content>`})
-export class DashboardPage{subscriptionStatus='inactive'; constructor(private auth:AuthService,private router:Router){const u=this.auth.getCurrentUser(); if(u){this.auth.userProfile$(u.uid).subscribe(p=>this.subscriptionStatus=p?.subscriptionStatus??'inactive');}} logout(){this.auth.logout().subscribe(()=>this.router.navigateByUrl('/login'));}}
+import { NgFor, NgIf } from '@angular/common';
+import { Component, OnDestroy } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { Firestore, collection, limit, onSnapshot, orderBy, query, where } from '@angular/fire/firestore';
+import { Subscription } from 'rxjs';
+import {
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonContent,
+  IonHeader,
+  IonText,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/angular/standalone';
+import { AuthService } from '../services/auth.service';
+import { UserProfile, WhisperRecord } from '../services/models';
+
+@Component({
+  standalone: true,
+  imports: [
+    NgFor,
+    NgIf,
+    RouterLink,
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    IonButton,
+    IonCard,
+    IonCardContent,
+    IonText,
+  ],
+  template: `
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Dashboard</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <main class="page-shell">
+        <section class="hero-copy">
+          <p class="eyebrow">MVP Flow</p>
+          <h1>Welcome{{ profile?.displayName ? ', ' + profile?.displayName : '' }}.</h1>
+          <p>Create a WhisperWrap, review every word, then send a consent email before the recipient can unwrap it.</p>
+        </section>
+
+        <ion-card class="form-card">
+          <ion-card-content>
+            <p><strong>Subscription:</strong> {{ subscriptionStatus }}</p>
+            <ion-text *ngIf="subscriptionStatus !== 'active'" color="danger">
+              Active subscription required to send WhisperWraps. Ask support to activate your profile.
+            </ion-text>
+
+            <ion-button expand="block" [disabled]="subscriptionStatus !== 'active'" routerLink="/create-whisper">
+              Create WhisperWrap
+            </ion-button>
+            <ion-button fill="clear" expand="block" (click)="logout()">Logout</ion-button>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card class="form-card compact-card">
+          <ion-card-content>
+            <h2>Recent WhisperWraps</h2>
+            <p class="muted" *ngIf="!recentWhispers.length">No WhisperWraps sent yet.</p>
+            <div class="whisper-row" *ngFor="let whisper of recentWhispers">
+              <div>
+                <strong>{{ whisper.title || whisper.recipientName }}</strong>
+                <p class="muted">{{ whisper.recipientName }} • {{ whisper.deliveryFormat }}</p>
+              </div>
+              <span class="status-pill">{{ whisper.status }}</span>
+            </div>
+            <ion-text class="error-text" *ngIf="statusError">{{ statusError }}</ion-text>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card class="form-card compact-card">
+          <ion-card-content>
+            <h2>Status tracking</h2>
+            <p class="muted">The backend and Firestore collections track each message through these MVP statuses.</p>
+            <ul class="status-list">
+              <li *ngFor="let status of statuses">{{ status }}</li>
+            </ul>
+          </ion-card-content>
+        </ion-card>
+      </main>
+    </ion-content>
+  `,
+})
+export class DashboardPage implements OnDestroy {
+  profile: UserProfile | null = null;
+  subscriptionStatus = 'inactive';
+  recentWhispers: WhisperRecord[] = [];
+  statusError = '';
+  statuses = ['draft', 'generated', 'consent_sent', 'accepted', 'opened', 'listened', 'failed'];
+  private profileSub?: Subscription;
+  private unsubscribeWhispers?: () => void;
+
+  constructor(
+    private auth: AuthService,
+    private db: Firestore,
+    private router: Router,
+  ) {
+    this.auth.waitForUser().then(user => {
+      if (!user) return;
+
+      this.profileSub = this.auth.userProfile$(user.uid).subscribe(profile => {
+        this.profile = profile;
+        this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
+      });
+
+      const whispersQuery = query(
+        collection(this.db, 'whispers'),
+        where('senderId', '==', user.uid),
+        orderBy('updatedAt', 'desc'),
+        limit(10),
+      );
+
+      this.unsubscribeWhispers = onSnapshot(
+        whispersQuery,
+        snapshot => {
+          this.statusError = '';
+          this.recentWhispers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as WhisperRecord);
+        },
+        () => {
+          this.statusError = 'Could not load recent WhisperWrap statuses.';
+        },
+      );
+    });
+  }
+
+  ngOnDestroy() {
+    this.profileSub?.unsubscribe();
+    this.unsubscribeWhispers?.();
+  }
+
+  logout() {
+    this.auth.logout().subscribe(() => this.router.navigateByUrl('/login'));
+  }
+}
