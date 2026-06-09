@@ -8,5 +8,5 @@ export const environment = {
     messagingSenderId: 'YOUR_FIREBASE_MESSAGING_SENDER_ID',
     appId: 'YOUR_FIREBASE_APP_ID'
   },
-  backendUrl: 'http://localhost:3000'
+  backendUrl: 'https://whisperwrap-backend.onrender.com'
 };
