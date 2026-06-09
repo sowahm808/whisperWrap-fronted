@@ -10,8 +10,8 @@ import {
   updateProfile,
 } from '@angular/fire/auth';
 import { Firestore, doc, onSnapshot, serverTimestamp, setDoc } from '@angular/fire/firestore';
-import { Observable, from, of } from 'rxjs';
-import { UserProfile } from './models';
+import { Observable, from, of, firstValueFrom } from 'rxjs';
+import { filter, take, timeout, catchError } from 'rxjs/operators';import { UserProfile } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -52,30 +52,38 @@ export class AuthService {
     return this.auth.currentUser;
   }
 
-  waitForUser(): Promise<User | null> {
-    if (this.auth.currentUser) {
-      return Promise.resolve(this.auth.currentUser);
-    }
+  // waitForUser(): Promise<User | null> {
+  //   if (this.auth.currentUser) {
+  //     return Promise.resolve(this.auth.currentUser);
+  //   }
 
-    return new Promise(resolve => {
-      let settled = false;
-      let unsubscribe = () => {};
-      let timeout: ReturnType<typeof setTimeout>;
+  //   return new Promise(resolve => {
+  //     let settled = false;
+  //     let unsubscribe = () => {};
+  //     let timeout: ReturnType<typeof setTimeout>;
 
-      const settle = (user: User | null) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeout);
-        unsubscribe();
-        resolve(user);
-      };
+  //     const settle = (user: User | null) => {
+  //       if (settled) return;
+  //       settled = true;
+  //       clearTimeout(timeout);
+  //       unsubscribe();
+  //       resolve(user);
+  //     };
 
-      timeout = setTimeout(() => settle(this.auth.currentUser), 5000);
-      unsubscribe = onAuthStateChanged(this.auth, settle, () => settle(this.auth.currentUser));
-      if (settled) unsubscribe();
-    });
-  }
-
+  //     timeout = setTimeout(() => settle(this.auth.currentUser), 5000);
+  //     unsubscribe = onAuthStateChanged(this.auth, settle, () => settle(this.auth.currentUser));
+  //     if (settled) unsubscribe();
+  //   });
+  // }
+waitForUser(): Promise<User | null> {
+  return firstValueFrom(
+    this.user$.pipe(
+      take(1),
+      timeout(5000),
+      catchError(() => of(this.auth.currentUser))
+    )
+  );
+}
   userProfile$(uid: string): Observable<UserProfile | null> {
     if (!uid) {
       return of(null);
