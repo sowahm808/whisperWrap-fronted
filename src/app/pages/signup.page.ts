@@ -1,5 +1,5 @@
 import { NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -91,6 +91,7 @@ export class SignupPage {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
+    private zone: NgZone,
   ) {}
 
   get nameMessage() {
@@ -126,12 +127,18 @@ export class SignupPage {
     this.isSubmitting = true;
     this.auth.signup(this.form.value.email!, this.form.value.password!, this.form.value.displayName!).subscribe({
       next: () => {
-        this.blurActiveElement();
-        this.router.navigateByUrl('/dashboard');
+        this.zone.run(() => {
+          this.blurActiveElement();
+          void this.router.navigateByUrl('/dashboard').finally(() => {
+            this.isSubmitting = false;
+          });
+        });
       },
       error: e => {
-        this.error = getAuthErrorMessage(e);
-        this.isSubmitting = false;
+        this.zone.run(() => {
+          this.error = getAuthErrorMessage(e);
+          this.isSubmitting = false;
+        });
       },
     });
   }
