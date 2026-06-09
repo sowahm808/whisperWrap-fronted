@@ -1,7 +1,7 @@
 import { NgIf } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   IonButton,
   IonCard,
@@ -16,6 +16,7 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { AuthService } from '../services/auth.service';
+import { FocusService } from '../services/focus.service';
 import { WhisperInput } from '../services/models';
 import { WhisperService } from '../services/whisper.service';
 
@@ -23,7 +24,6 @@ import { WhisperService } from '../services/whisper.service';
   standalone: true,
   imports: [
     NgIf,
-    RouterLink,
     FormsModule,
     IonContent,
     IonHeader,
@@ -89,7 +89,7 @@ import { WhisperService } from '../services/whisper.service';
           <ion-card class="form-card">
             <ion-card-content>
               <p>No WhisperWrap draft is available.</p>
-              <ion-button expand="block" routerLink="/create-whisper">Create WhisperWrap</ion-button>
+              <ion-button expand="block" (click)="navigateToCreateWhisper()">Create WhisperWrap</ion-button>
             </ion-card-content>
           </ion-card>
         </ng-template>
@@ -107,10 +107,16 @@ export class ReviewWhisperPage {
     public service: WhisperService,
     private auth: AuthService,
     private router: Router,
+    private focus: FocusService,
   ) {}
 
   get isBusy() {
     return this.isRegenerating || this.isSending;
+  }
+
+  navigateToCreateWhisper() {
+    this.focus.clearActiveElement();
+    this.router.navigateByUrl('/create-whisper');
   }
 
   persistDraft() {
@@ -201,6 +207,7 @@ export class ReviewWhisperPage {
             unwrapToken: response.token,
             unwrapLink: response.unwrapLink,
           });
+          this.focus.clearActiveElement();
           this.router.navigateByUrl('/whisper-sent');
         },
         error: e => {

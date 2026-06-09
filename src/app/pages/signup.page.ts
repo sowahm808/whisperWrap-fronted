@@ -16,6 +16,7 @@ import {
 } from '@ionic/angular/standalone';
 import { getAuthErrorMessage } from '../services/auth-errors';
 import { AuthService } from '../services/auth.service';
+import { FocusService } from '../services/focus.service';
 
 @Component({
   standalone: true,
@@ -92,6 +93,7 @@ export class SignupPage {
     private auth: AuthService,
     private router: Router,
     private zone: NgZone,
+    private focus: FocusService,
   ) {}
 
   get nameMessage() {
@@ -149,6 +151,6 @@ export class SignupPage {
   }
 
   private blurActiveElement() {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    this.focus.clearActiveElement();
   }
 }

@@ -18,6 +18,7 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { AuthService } from '../services/auth.service';
+import { FocusService } from '../services/focus.service';
 import { DeliveryFormat, WhisperInput, WhisperType, WrapStyle } from '../services/models';
 import { WhisperService } from '../services/whisper.service';
 
@@ -130,6 +131,7 @@ export class CreateWhisperPage {
     private auth: AuthService,
     private service: WhisperService,
     private router: Router,
+    private focus: FocusService,
   ) {}
 
   messageFor(controlName: keyof typeof this.form.controls) {
@@ -160,6 +162,7 @@ export class CreateWhisperPage {
           senderName: user?.displayName ?? '',
           status: 'generated',
         });
+        this.focus.clearActiveElement();
         this.router.navigateByUrl('/review-whisper');
       },
       error: e => {
