@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from '@angular/fire/auth';
-import { Firestore, doc, setDoc, docData } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, onSnapshot } from '@angular/fire/firestore';
 import { Observable, from, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -16,6 +16,19 @@ export class AuthService {
   }
   logout() { return from(signOut(this.auth)); }
   getCurrentUser() { return this.auth.currentUser; }
-  userProfile$(uid: string): Observable<any> { return uid ? (docData(doc(this.db, 'users', uid)) as Observable<any>) : of(null); }
+  userProfile$(uid: string): Observable<any> {
+    if (!uid) {
+      return of(null);
+    }
+
+    return new Observable(subscriber => {
+      const userRef = doc(this.db, 'users', uid);
+      return onSnapshot(
+        userRef,
+        snapshot => subscriber.next(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null),
+        error => subscriber.error(error),
+      );
+    });
+  }
   async token() { return this.auth.currentUser?.getIdToken() ?? ''; }
 }
