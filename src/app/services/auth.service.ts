@@ -11,6 +11,19 @@ export class AuthService {
   login(email: string, password: string) {
     return from(signInWithEmailAndPassword(this.auth, email, password));
   }
+
+  signup(email: string, password: string) {
+    return from(
+      createUserWithEmailAndPassword(this.auth, email, password).then(async credential => {
+        await setDoc(doc(this.db, 'users', credential.user.uid), {
+          email: credential.user.email ?? email,
+          subscriptionStatus: 'inactive',
+        });
+
+        return credential;
+      }),
+    );
+  }
   logout() { return from(signOut(this.auth)); }
   getCurrentUser() { return this.auth.currentUser; }
   userProfile$(uid: string): Observable<any> {
