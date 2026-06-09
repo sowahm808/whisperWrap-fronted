@@ -151,6 +151,13 @@ export class CreateWhisperPage {
 
     this.isGenerating = true;
     const user = await this.auth.waitForUser();
+
+    if (!user) {
+      this.error = 'Please log in before generating a WhisperWrap.';
+      this.isGenerating = false;
+      return;
+    }
+
     const payload = this.form.getRawValue() as WhisperInput;
 
     this.service.generate(payload).subscribe({
