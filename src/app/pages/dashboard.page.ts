@@ -1,6 +1,6 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Firestore, collection, limit, onSnapshot, orderBy, query, where } from '@angular/fire/firestore';
 import { Subscription } from 'rxjs';
 import {
@@ -14,6 +14,7 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { AuthService } from '../services/auth.service';
+import { FocusService } from '../services/focus.service';
 import { UserProfile, WhisperRecord } from '../services/models';
 
 @Component({
@@ -21,7 +22,6 @@ import { UserProfile, WhisperRecord } from '../services/models';
   imports: [
     NgFor,
     NgIf,
-    RouterLink,
     IonContent,
     IonHeader,
     IonTitle,
@@ -53,7 +53,7 @@ import { UserProfile, WhisperRecord } from '../services/models';
               You can draft a WhisperWrap now. Sending may still require account activation.
             </ion-text>
 
-            <ion-button expand="block" routerLink="/create-whisper">
+            <ion-button expand="block" (click)="navigateToCreateWhisper()">
               Create WhisperWrap
             </ion-button>
             <ion-button fill="clear" expand="block" (click)="logout()">Logout</ion-button>
@@ -101,6 +101,7 @@ export class DashboardPage implements OnDestroy {
     private auth: AuthService,
     private db: Firestore,
     private router: Router,
+    private focus: FocusService,
   ) {
     this.auth.waitForUser().then(user => {
       if (!user) return;
@@ -135,7 +136,13 @@ export class DashboardPage implements OnDestroy {
     this.unsubscribeWhispers?.();
   }
 
+  navigateToCreateWhisper() {
+    this.focus.clearActiveElement();
+    this.router.navigateByUrl('/create-whisper');
+  }
+
   logout() {
+    this.focus.clearActiveElement();
     this.auth.logout().subscribe(() => this.router.navigateByUrl('/login'));
   }
 }
