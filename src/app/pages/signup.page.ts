@@ -1,4 +1,166 @@
-import { Component } from '@angular/core'; import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'; import { Router, RouterLink } from '@angular/router';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonInput, IonItem, IonCard, IonCardContent, IonText } from '@ionic/angular/standalone'; import { AuthService } from '../services/auth.service';
-@Component({standalone:true,imports:[ReactiveFormsModule,RouterLink,IonContent,IonHeader,IonTitle,IonToolbar,IonButton,IonInput,IonItem,IonCard,IonCardContent,IonText],template:`<ion-header><ion-toolbar><ion-title>Sign Up</ion-title></ion-toolbar></ion-header><ion-content><ion-card class='form-card'><ion-card-content><form [formGroup]='form' (ngSubmit)='submit()'><ion-item><ion-input label='Email' formControlName='email'/></ion-item><ion-item><ion-input type='password' label='Password' formControlName='password'/></ion-item><ion-text class='error-text'>{{error}}</ion-text><ion-button expand='block' type='submit'>Create account</ion-button><ion-button fill='clear' expand='block' routerLink='/login'>Back to login</ion-button></form></ion-card-content></ion-card></ion-content>`})
-export class SignupPage{error=''; form=this.fb.group({email:['',[Validators.required,Validators.email]],password:['',[Validators.required,Validators.minLength(6)]]}); constructor(private fb:FormBuilder,private auth:AuthService,private router:Router){} submit(){ if(this.form.invalid)return; this.auth.signup(this.form.value.email!,this.form.value.password!).subscribe({next:()=>this.router.navigateByUrl('/dashboard'),error:e=>this.error=e.message}); }}
+import { NgIf } from "@angular/common";
+import { Component } from "@angular/core";
+import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { Router } from "@angular/router";
+import {
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonContent,
+  IonHeader,
+  IonInput,
+  IonItem,
+  IonText,
+  IonTitle,
+  IonToolbar,
+} from "@ionic/angular/standalone";
+import { AuthService } from "../services/auth.service";
+
+@Component({
+  standalone: true,
+  imports: [
+    NgIf,
+    ReactiveFormsModule,
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    IonButton,
+    IonInput,
+    IonItem,
+    IonCard,
+    IonCardContent,
+    IonText,
+  ],
+  template: `
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Sign Up</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-card class="form-card">
+        <ion-card-content>
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <ion-item>
+              <ion-input label="Email" type="email" formControlName="email" />
+            </ion-item>
+            <ion-text class="error-text" *ngIf="emailMessage">{{
+              emailMessage
+            }}</ion-text>
+
+            <ion-item>
+              <ion-input
+                label="Password"
+                type="password"
+                formControlName="password"
+              />
+            </ion-item>
+            <ion-text class="error-text" *ngIf="passwordMessage">{{
+              passwordMessage
+            }}</ion-text>
+
+            <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
+
+            <ion-button expand="block" type="submit" [disabled]="isSubmitting">
+              {{ isSubmitting ? "Creating account..." : "Create account" }}
+            </ion-button>
+            <ion-button
+              fill="clear"
+              expand="block"
+              type="button"
+              (click)="navigateToLogin()"
+              >Back to login</ion-button
+            >
+          </form>
+        </ion-card-content>
+      </ion-card>
+    </ion-content>
+  `,
+})
+export class SignupPage {
+  error = "";
+  isSubmitting = false;
+  form = this.fb.group({
+    email: ["", [Validators.required, Validators.email]],
+    password: ["", [Validators.required, Validators.minLength(6)]],
+  });
+
+  constructor(
+    private fb: FormBuilder,
+    private auth: AuthService,
+    private router: Router,
+  ) {}
+
+  get emailMessage() {
+    const control = this.form.controls.email;
+
+    if (!control.touched || !control.errors) {
+      return "";
+    }
+
+    if (control.errors["required"]) {
+      return "Email is required.";
+    }
+
+    if (control.errors["email"]) {
+      return "Enter a valid email address.";
+    }
+
+    return "";
+  }
+
+  get passwordMessage() {
+    const control = this.form.controls.password;
+
+    if (!control.touched || !control.errors) {
+      return "";
+    }
+
+    if (control.errors["required"]) {
+      return "Password is required.";
+    }
+
+    if (control.errors["minlength"]) {
+      return "Password must be at least 6 characters.";
+    }
+
+    return "";
+  }
+
+  submit() {
+    this.error = "";
+    this.form.markAllAsTouched();
+
+    if (this.form.invalid || this.isSubmitting) {
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    this.auth
+      .signup(this.form.value.email!, this.form.value.password!)
+      .subscribe({
+        next: () => {
+          this.blurActiveElement();
+          this.router.navigateByUrl("/dashboard");
+        },
+        error: (e) => {
+          this.error = e.message;
+          this.isSubmitting = false;
+        },
+      });
+  }
+
+  navigateToLogin() {
+    this.blurActiveElement();
+    this.router.navigateByUrl("/login");
+  }
+
+  private blurActiveElement() {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  }
+}
