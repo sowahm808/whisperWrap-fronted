@@ -1,5 +1,5 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -17,6 +17,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
 import { DeliveryFormat, WhisperInput, WhisperType, WrapStyle } from '../services/models';
@@ -55,17 +56,17 @@ import { WhisperService } from '../services/whisper.service';
           <ion-card-content>
             <form [formGroup]="form" (ngSubmit)="generate()" novalidate>
               <ion-item>
-                <ion-input label="Recipient name" labelPlacement="stacked" formControlName="recipientName" />
+                <ion-input label="Recipient name" labelPlacement="stacked" formControlName="recipientName"></ion-input>
               </ion-item>
               <ion-text class="error-text" *ngIf="messageFor('recipientName')">{{ messageFor('recipientName') }}</ion-text>
 
               <ion-item>
-                <ion-input label="Recipient email" labelPlacement="stacked" type="email" formControlName="recipientEmail" />
+                <ion-input label="Recipient email" labelPlacement="stacked" type="email" formControlName="recipientEmail"></ion-input>
               </ion-item>
               <ion-text class="error-text" *ngIf="messageFor('recipientEmail')">{{ messageFor('recipientEmail') }}</ion-text>
 
               <ion-item>
-                <ion-input label="Recipient phone" labelPlacement="stacked" type="tel" formControlName="recipientPhone" />
+                <ion-input label="Recipient phone" labelPlacement="stacked" type="tel" formControlName="recipientPhone"></ion-input>
               </ion-item>
               <ion-text class="error-text" *ngIf="messageFor('recipientPhone')">{{ messageFor('recipientPhone') }}</ion-text>
 
@@ -94,10 +95,16 @@ import { WhisperService } from '../services/whisper.service';
                   formControlName="senderIntent"
                   rows="6"
                   placeholder="Share the occasion, relationship context, tone, and anything sensitive the AI should honor."
-                />
+                ></ion-textarea>
               </ion-item>
-              <ion-text class="error-text" *ngIf="messageFor('senderIntent')">{{ messageFor('senderIntent') }}</ion-text>
-              <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
+
+              <ion-text class="error-text" *ngIf="messageFor('senderIntent')">
+                {{ messageFor('senderIntent') }}
+              </ion-text>
+
+              <ion-text class="error-text" *ngIf="error">
+                {{ error }}
+              </ion-text>
 
               <ion-button expand="block" type="submit" [disabled]="isGenerating">
                 {{ isGenerating ? 'Drafting...' : 'Generate with AI' }}
@@ -110,10 +117,34 @@ import { WhisperService } from '../services/whisper.service';
   `,
 })
 export class CreateWhisperPage {
+  private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
+  private service = inject(WhisperService);
+  private router = inject(Router);
+  private focus = inject(FocusService);
+
   error = '';
   isGenerating = false;
-  types: WhisperType[] = ['congratulations', 'comfort', 'motivation', 'forgiveness', 'apology', 'reconnection', 'encouragement'];
-  styles: WrapStyle[] = ['gentle', 'prophetic', 'elegant', 'celebration', 'healing', 'reconciliation'];
+
+  types: WhisperType[] = [
+    'congratulations',
+    'comfort',
+    'motivation',
+    'forgiveness',
+    'apology',
+    'reconnection',
+    'encouragement',
+  ];
+
+  styles: WrapStyle[] = [
+    'gentle',
+    'prophetic',
+    'elegant',
+    'celebration',
+    'healing',
+    'reconciliation',
+  ];
+
   formats: DeliveryFormat[] = ['text', 'audio', 'text_audio'];
 
   form = this.fb.group({
@@ -126,56 +157,63 @@ export class CreateWhisperPage {
     senderIntent: ['', [Validators.required, Validators.minLength(20)]],
   });
 
-  constructor(
-    private fb: FormBuilder,
-    private auth: AuthService,
-    private service: WhisperService,
-    private router: Router,
-    private focus: FocusService,
-  ) {}
-
-  messageFor(controlName: keyof typeof this.form.controls) {
+  messageFor(controlName: keyof typeof this.form.controls): string {
     const control = this.form.controls[controlName];
+
     if (!control.touched || !control.errors) return '';
+
     if (control.errors['required']) return 'This field is required.';
     if (control.errors['email']) return 'Enter a valid email address.';
-    if (control.errors['minlength']) return `Enter at least ${control.errors['minlength'].requiredLength} characters.`;
+    if (control.errors['minlength']) {
+      return `Enter at least ${control.errors['minlength'].requiredLength} characters.`;
+    }
+
     return '';
   }
 
-  async generate() {
+  async generate(): Promise<void> {
+    if (this.isGenerating) return;
+
     this.error = '';
     this.form.markAllAsTouched();
 
-    if (this.form.invalid || this.isGenerating) return;
+    if (this.form.invalid) return;
 
     this.isGenerating = true;
-    const user = await this.auth.waitForUser();
 
-    if (!user) {
-      this.error = 'Please log in before generating a WhisperWrap.';
+    try {
+      const user = await this.auth.waitForUser();
+
+      if (!user) {
+        this.error = 'Please log in before generating a WhisperWrap.';
+        return;
+      }
+
+      const payload = this.form.getRawValue() as WhisperInput;
+      const generated = await firstValueFrom(this.service.generate(payload));
+
+      if (!generated) {
+        this.error = 'The AI did not return a WhisperWrap draft. Please try again.';
+        return;
+      }
+
+      this.service.setDraft({
+        ...payload,
+        ...generated,
+        senderId: user.uid,
+        senderName: user.displayName ?? '',
+        status: 'generated',
+      });
+
+      this.focus.clearActiveElement();
+
+      await this.router.navigateByUrl('/review-whisper', {
+        replaceUrl: false,
+      });
+    } catch (e: unknown) {
+      this.error = e instanceof Error ? e.message : 'Failed to generate WhisperWrap. Please try again.';
+    } finally {
       this.isGenerating = false;
-      return;
     }
-
-    const payload = this.form.getRawValue() as WhisperInput;
-
-    this.service.generate(payload).subscribe({
-      next: generated => {
-        this.service.setDraft({
-          ...payload,
-          ...generated,
-          senderId: user?.uid,
-          senderName: user?.displayName ?? '',
-          status: 'generated',
-        });
-        this.focus.clearActiveElement();
-        this.router.navigateByUrl('/review-whisper');
-      },
-      error: e => {
-        this.error = e.message;
-        this.isGenerating = false;
-      },
-    });
   }
 }
