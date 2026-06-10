@@ -6,6 +6,8 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   updateProfile,
 } from '@angular/fire/auth';
@@ -23,6 +25,36 @@ export class AuthService {
   login(email: string, password: string) {
     return from(signInWithEmailAndPassword(this.auth, email.trim(), password));
   }
+
+  loginWithGoogle() {
+  const provider = new GoogleAuthProvider();
+
+  provider.setCustomParameters({
+    prompt: 'select_account',
+  });
+
+  return from(
+    signInWithPopup(this.auth, provider).then(async credential => {
+      const user = credential.user;
+
+      await setDoc(
+        doc(this.db, 'users', user.uid),
+        {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          subscriptionStatus: 'inactive',
+          authProvider: 'google',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      return credential;
+    }),
+  );
+}
 
   signup(email: string, password: string, displayName: string) {
     const cleanEmail = email.trim();
