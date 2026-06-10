@@ -198,7 +198,6 @@ export class LoginPage implements OnInit {
     this.isGoogleSubmitting = true;
     this.blurActiveElement();
 
-<<<<<<< HEAD
     this.auth.loginWithGoogle().subscribe({
       next: () => {
   this.zone.run(async () => {
@@ -209,11 +208,6 @@ export class LoginPage implements OnInit {
     }
   });
 },
-=======
-    sessionStorage.setItem('googleAuthRedirectPending', 'true');
-
-    this.auth.loginWithGoogleRedirect().subscribe({
->>>>>>> 9805b49be8f2be517a2d6341aa5e147eedec9dd0
       error: e => {
         sessionStorage.removeItem('googleAuthRedirectPending');
 
