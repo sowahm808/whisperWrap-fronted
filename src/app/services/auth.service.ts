@@ -5,7 +5,10 @@ import {
   authState,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
+  getAdditionalUserInfo,
+  GoogleAuthProvider,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from '@angular/fire/auth';
@@ -32,13 +35,26 @@ export class AuthService {
     return from(
       createUserWithEmailAndPassword(this.auth, cleanEmail, password).then(async credential => {
         await updateProfile(credential.user, { displayName: cleanDisplayName });
-        await setDoc(doc(this.db, 'users', credential.user.uid), {
-          email: credential.user.email ?? cleanEmail,
-          displayName: cleanDisplayName,
-          subscriptionStatus: 'inactive',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
+        await this.saveUserProfile(credential.user, cleanDisplayName, cleanEmail, true);
+        await credential.user.getIdToken(true);
+
+        return credential;
+      }),
+    );
+  }
+
+  loginWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    return from(
+      signInWithPopup(this.auth, provider).then(async credential => {
+        await this.saveUserProfile(
+          credential.user,
+          undefined,
+          undefined,
+          getAdditionalUserInfo(credential)?.isNewUser ?? false,
+        );
         await credential.user.getIdToken(true);
 
         return credential;
@@ -112,6 +128,19 @@ export class AuthService {
     }
 
     return refreshedToken;
+  }
+
+  private saveUserProfile(user: User, displayName = user.displayName ?? '', email = user.email ?? '', isNewUser = false) {
+    return setDoc(
+      doc(this.db, 'users', user.uid),
+      {
+        email,
+        displayName,
+        ...(isNewUser ? { subscriptionStatus: 'inactive', createdAt: serverTimestamp() } : {}),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
   }
 
   private isFirebaseIdToken(token: string) {
