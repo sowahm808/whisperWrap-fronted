@@ -1,5 +1,5 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -53,7 +53,7 @@ import { WhisperService } from '../services/whisper.service';
       <main class="page-shell">
         <ion-card class="form-card">
           <ion-card-content>
-            <form [formGroup]="form" (ngSubmit)="generate()" novalidate>
+            <form [formGroup]="form" novalidate>
               <ion-item>
                 <ion-input label="Recipient name" labelPlacement="stacked" formControlName="recipientName" />
               </ion-item>
@@ -99,7 +99,7 @@ import { WhisperService } from '../services/whisper.service';
               <ion-text class="error-text" *ngIf="messageFor('senderIntent')">{{ messageFor('senderIntent') }}</ion-text>
               <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
 
-              <ion-button expand="block" type="submit" [disabled]="isGenerating">
+              <ion-button expand="block" type="button" [disabled]="isGenerating" (click)="generate()">
                 {{ isGenerating ? 'Drafting...' : 'Generate with AI' }}
               </ion-button>
             </form>
@@ -132,6 +132,7 @@ export class CreateWhisperPage {
     private service: WhisperService,
     private router: Router,
     private focus: FocusService,
+    private zone: NgZone,
   ) {}
 
   messageFor(controlName: keyof typeof this.form.controls) {
@@ -162,19 +163,25 @@ export class CreateWhisperPage {
 
     this.service.generate(payload).subscribe({
       next: generated => {
-        this.service.setDraft({
-          ...payload,
-          ...generated,
-          senderId: user?.uid,
-          senderName: user?.displayName ?? '',
-          status: 'generated',
+        this.zone.run(() => {
+          this.service.setDraft({
+            ...payload,
+            ...generated,
+            senderId: user?.uid,
+            senderName: user?.displayName ?? '',
+            status: 'generated',
+          });
+          this.focus.clearActiveElement();
+          void this.router.navigateByUrl('/review-whisper').finally(() => {
+            this.isGenerating = false;
+          });
         });
-        this.focus.clearActiveElement();
-        this.router.navigateByUrl('/review-whisper');
       },
       error: e => {
-        this.error = e.message;
-        this.isGenerating = false;
+        this.zone.run(() => {
+          this.error = e.message;
+          this.isGenerating = false;
+        });
       },
     });
   }

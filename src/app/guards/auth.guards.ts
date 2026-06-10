@@ -4,13 +4,11 @@ import { firstValueFrom, take, timeout, catchError, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 async function getCurrentUserSafely(auth: AuthService) {
-  return firstValueFrom(
-    auth.user$.pipe(
-      take(1),
-      timeout(8000),
-      catchError(() => of(null)),
-    ),
-  );
+  try {
+    return await auth.waitForUser();
+  } catch {
+    return null;
+  }
 }
 
 export const authGuard: CanActivateFn = async () => {
