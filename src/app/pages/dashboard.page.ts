@@ -24,6 +24,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
 import { UserProfile, WhisperRecord } from '../services/models';
+
 @Component({
   standalone: true,
   imports: [
@@ -79,6 +80,10 @@ import { UserProfile, WhisperRecord } from '../services/models';
             >
               Logout
             </ion-button>
+
+            <ion-text class="error-text" *ngIf="navigationError">
+              {{ navigationError }}
+            </ion-text>
           </ion-card-content>
         </ion-card>
 
@@ -96,7 +101,9 @@ import { UserProfile, WhisperRecord } from '../services/models';
               <span class="status-pill">{{ whisper.status }}</span>
             </div>
 
-            <ion-text class="error-text" *ngIf="statusError">{{ statusError }}</ion-text>
+            <ion-text class="error-text" *ngIf="statusError">
+              {{ statusError }}
+            </ion-text>
           </ion-card-content>
         </ion-card>
 
@@ -118,6 +125,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   subscriptionStatus = 'inactive';
   recentWhispers: WhisperRecord[] = [];
   statusError = '';
+  navigationError = '';
   isNavigating = false;
 
   statuses = ['draft', 'generated', 'consent_sent', 'accepted', 'opened', 'listened', 'failed'];
@@ -134,103 +142,124 @@ export class DashboardPage implements OnInit, OnDestroy {
     private zone: NgZone,
   ) {}
 
-  async ngOnInit() {
-    const user = await this.auth.waitForUser();
+  async ngOnInit(): Promise<void> {
+    try {
+      const user = await this.auth.waitForUser();
 
-    if (this.destroyed) return;
+      if (this.destroyed) return;
 
-    if (!user) {
-      await this.router.navigateByUrl('/login', { replaceUrl: true });
-      return;
+      if (!user) {
+        await this.zone.run(() =>
+          this.router.navigateByUrl('/login', { replaceUrl: true }),
+        );
+        return;
+      }
+
+      this.profileSub = this.auth.userProfile$(user.uid).subscribe({
+        next: profile => {
+          this.zone.run(() => {
+            this.profile = profile;
+            this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
+          });
+        },
+        error: error => {
+          console.error('User profile subscription failed:', error);
+          this.zone.run(() => {
+            this.subscriptionStatus = 'inactive';
+          });
+        },
+      });
+
+      const whispersQuery = query(
+        collection(this.db, 'whispers'),
+        where('senderId', '==', user.uid),
+        orderBy('updatedAt', 'desc'),
+        limit(10),
+      );
+
+      this.unsubscribeWhispers = onSnapshot(
+        whispersQuery,
+        snapshot => {
+          this.zone.run(() => {
+            this.statusError = '';
+            this.recentWhispers = snapshot.docs.map(snapshotDoc => ({
+              id: snapshotDoc.id,
+              ...snapshotDoc.data(),
+            })) as WhisperRecord[];
+          });
+        },
+        error => {
+          this.zone.run(() => {
+            console.error('Recent WhisperWrap query failed:', error);
+
+            if (error?.code === 'failed-precondition') {
+              this.statusError = 'Recent WhisperWraps need a Firestore index before they can load.';
+              return;
+            }
+
+            this.statusError = 'Could not load recent WhisperWrap statuses.';
+          });
+        },
+      );
+    } catch (error) {
+      console.error('Dashboard initialization failed:', error);
+      this.navigationError = 'Could not load dashboard. Please refresh and try again.';
     }
-
-    this.profileSub = this.auth.userProfile$(user.uid).subscribe({
-      next: profile => {
-        this.profile = profile;
-        this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
-      },
-      error: error => {
-        console.error('User profile subscription failed:', error);
-        this.subscriptionStatus = 'inactive';
-      },
-    });
-
-    const whispersQuery = query(
-      collection(this.db, 'whispers'),
-      where('senderId', '==', user.uid),
-      orderBy('updatedAt', 'desc'),
-      limit(10),
-    );
-
-    this.unsubscribeWhispers = onSnapshot(
-      whispersQuery,
-      snapshot => {
-        this.zone.run(() => {
-          this.statusError = '';
-          this.recentWhispers = snapshot.docs.map(snapshotDoc => ({
-            id: snapshotDoc.id,
-            ...snapshotDoc.data(),
-          }) as WhisperRecord);
-        });
-      },
-      error => {
-        this.zone.run(() => {
-          console.error('Recent WhisperWrap query failed:', error);
-
-          if (error?.code === 'failed-precondition') {
-            this.statusError = 'Recent WhisperWraps need a Firestore index before they can load.';
-            return;
-          }
-
-          this.statusError = 'Could not load recent WhisperWrap statuses.';
-        });
-      },
-    );
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroyed = true;
     this.profileSub?.unsubscribe();
     this.unsubscribeWhispers?.();
   }
 
-  async navigateToCreateWhisper(event?: Event) {
+  async navigateToCreateWhisper(event?: Event): Promise<void> {
     if (this.isNavigating) return;
 
+    this.navigationError = '';
     this.isNavigating = true;
+
     this.blurEventTarget(event);
     this.focus.clearActiveElement();
 
     try {
-      const navigated = await this.zone.run(() => this.router.navigateByUrl('/create-whisper'));
+      const navigated = await this.zone.run(() =>
+        this.router.navigateByUrl('/create-whisper'),
+      );
 
       if (!navigated) {
-        this.isNavigating = false;
+        this.navigationError = 'Could not open the Create WhisperWrap page.';
       }
     } catch (error) {
       console.error('Create WhisperWrap navigation failed:', error);
+      this.navigationError = 'Could not open the Create WhisperWrap page.';
+    } finally {
       this.isNavigating = false;
     }
   }
 
-  logout() {
+  logout(): void {
     if (this.isNavigating) return;
 
+    this.navigationError = '';
     this.isNavigating = true;
     this.focus.clearActiveElement();
 
     this.auth.logout().subscribe({
       next: () => {
-        void this.zone.run(() => this.router.navigateByUrl('/login', { replaceUrl: true }));
+        void this.zone.run(() =>
+          this.router.navigateByUrl('/login', { replaceUrl: true }),
+        );
       },
       error: error => {
         console.error('Logout failed:', error);
+        this.navigationError = 'Logout failed. Please try again.';
         this.isNavigating = false;
       },
     });
   }
 
-  private blurEventTarget(event?: Event) {
+  private blurEventTarget(event?: Event): void {
     const target = event?.target as HTMLElement | null;
     const currentTarget = event?.currentTarget as HTMLElement | null;
 
