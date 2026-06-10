@@ -1,5 +1,5 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy,OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Firestore, collection, limit, onSnapshot, orderBy, query, where } from '@angular/fire/firestore';
 import { Subscription } from 'rxjs';
@@ -85,10 +85,13 @@ import { UserProfile, WhisperRecord } from '../services/models';
           </ion-card-content>
         </ion-card>
       </main>
+      <p style="padding: 1rem; background: yellow; color: black;">
+  DASHBOARD COMPONENT LOADED
+</p>
     </ion-content>
   `,
 })
-export class DashboardPage implements OnDestroy {
+export class DashboardPage implements OnInit, OnDestroy {
   profile: UserProfile | null = null;
   subscriptionStatus = 'inactive';
   recentWhispers: WhisperRecord[] = [];
@@ -97,12 +100,12 @@ export class DashboardPage implements OnDestroy {
   private profileSub?: Subscription;
   private unsubscribeWhispers?: () => void;
 
-  constructor(
-    private auth: AuthService,
-    private db: Firestore,
-    private router: Router,
-    private focus: FocusService,
-  ) {
+ constructor(
+  private auth: AuthService,
+  private db: Firestore,
+  private router: Router,
+  private focus: FocusService,
+) {
     this.auth.waitForUser().then(user => {
       if (!user) return;
 
@@ -130,7 +133,41 @@ export class DashboardPage implements OnDestroy {
       );
     });
   }
+async ngOnInit() {
+  const user = await this.auth.waitForUser();
 
+  if (!user) {
+    await this.router.navigateByUrl('/login', { replaceUrl: true });
+    return;
+  }
+
+  this.profileSub = this.auth.userProfile$(user.uid).subscribe(profile => {
+    this.profile = profile;
+    this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
+  });
+
+  const whispersQuery = query(
+    collection(this.db, 'whispers'),
+    where('senderId', '==', user.uid),
+    orderBy('updatedAt', 'desc'),
+    limit(10),
+  );
+
+  this.unsubscribeWhispers = onSnapshot(
+    whispersQuery,
+    snapshot => {
+      this.statusError = '';
+      this.recentWhispers = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }) as WhisperRecord);
+    },
+    error => {
+      console.error(error);
+      this.statusError = 'Could not load recent WhisperWrap statuses.';
+    },
+  );
+}
   ngOnDestroy() {
     this.profileSub?.unsubscribe();
     this.unsubscribeWhispers?.();
