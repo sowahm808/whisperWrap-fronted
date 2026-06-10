@@ -1,5 +1,5 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component, OnDestroy, OnInit, NgZone } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   Firestore,
@@ -24,7 +24,6 @@ import {
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
 import { UserProfile, WhisperRecord } from '../services/models';
-import { NavController } from '@ionic/angular/standalone';
 @Component({
   standalone: true,
   imports: [
@@ -128,13 +127,12 @@ export class DashboardPage implements OnInit, OnDestroy {
   private destroyed = false;
 
   constructor(
-  private auth: AuthService,
-  private db: Firestore,
-  private router: Router,
-  private navCtrl: NavController,
-  private focus: FocusService,
-  private zone: NgZone,
-) {}
+    private auth: AuthService,
+    private db: Firestore,
+    private router: Router,
+    private focus: FocusService,
+    private zone: NgZone,
+  ) {}
 
   async ngOnInit() {
     const user = await this.auth.waitForUser();
@@ -196,52 +194,41 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.unsubscribeWhispers?.();
   }
 
- async navigateToCreateWhisper(event?: Event) {
-  if (this.isNavigating) return;
+  async navigateToCreateWhisper(event?: Event) {
+    if (this.isNavigating) return;
 
-  this.isNavigating = true;
-
-  try {
-    const target = event?.target as HTMLElement | null;
-    const currentTarget = event?.currentTarget as HTMLElement | null;
-
-    target?.blur?.();
-    currentTarget?.blur?.();
+    this.isNavigating = true;
+    this.blurEventTarget(event);
     this.focus.clearActiveElement();
 
-    await new Promise<void>(resolve => {
-      requestAnimationFrame(() => resolve());
-    });
+    try {
+      const navigated = await this.zone.run(() => this.router.navigateByUrl('/create-whisper'));
 
-    await this.zone.run(() =>
-      this.navCtrl.navigateForward('/create-whisper', {
-        animated: false,
-      }),
-    );
-  } catch (error) {
-    console.error('Create WhisperWrap navigation failed:', error);
-    this.isNavigating = false;
-  }
-}
-
- logout() {
-  if (this.isNavigating) return;
-
-  this.isNavigating = true;
-  this.focus.clearActiveElement();
-
-  this.auth.logout().subscribe({
-    next: () => {
-      void this.navCtrl.navigateRoot('/login', {
-        animated: false,
-      });
-    },
-    error: error => {
-      console.error('Logout failed:', error);
+      if (!navigated) {
+        this.isNavigating = false;
+      }
+    } catch (error) {
+      console.error('Create WhisperWrap navigation failed:', error);
       this.isNavigating = false;
-    },
-  });
-}
+    }
+  }
+
+  logout() {
+    if (this.isNavigating) return;
+
+    this.isNavigating = true;
+    this.focus.clearActiveElement();
+
+    this.auth.logout().subscribe({
+      next: () => {
+        void this.zone.run(() => this.router.navigateByUrl('/login', { replaceUrl: true }));
+      },
+      error: error => {
+        console.error('Logout failed:', error);
+        this.isNavigating = false;
+      },
+    });
+  }
 
   private blurEventTarget(event?: Event) {
     const target = event?.target as HTMLElement | null;
@@ -249,13 +236,5 @@ export class DashboardPage implements OnInit, OnDestroy {
 
     target?.blur?.();
     currentTarget?.blur?.();
-  }
-
-  private waitForFocusToClear() {
-    return new Promise<void>(resolve => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve());
-      });
-    });
   }
 }
