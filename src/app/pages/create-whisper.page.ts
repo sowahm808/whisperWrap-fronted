@@ -1,9 +1,5 @@
 import { NgFor, NgIf } from '@angular/common';
-<<<<<<< HEAD
 import { Component, inject } from '@angular/core';
-=======
-import { Component, NgZone } from '@angular/core';
->>>>>>> 09694cadd8f9c8972e00710fbc09737a516f8111
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -161,20 +157,7 @@ export class CreateWhisperPage {
     senderIntent: ['', [Validators.required, Validators.minLength(20)]],
   });
 
-<<<<<<< HEAD
   messageFor(controlName: keyof typeof this.form.controls): string {
-=======
-  constructor(
-    private fb: FormBuilder,
-    private auth: AuthService,
-    private service: WhisperService,
-    private router: Router,
-    private focus: FocusService,
-    private zone: NgZone,
-  ) {}
-
-  messageFor(controlName: keyof typeof this.form.controls) {
->>>>>>> 09694cadd8f9c8972e00710fbc09737a516f8111
     const control = this.form.controls[controlName];
 
     if (!control.touched || !control.errors) return '';
@@ -232,34 +215,5 @@ export class CreateWhisperPage {
     } finally {
       this.isGenerating = false;
     }
-<<<<<<< HEAD
-=======
-
-    const payload = this.form.getRawValue() as WhisperInput;
-
-    this.service.generate(payload).subscribe({
-      next: generated => {
-        this.zone.run(() => {
-          this.service.setDraft({
-            ...payload,
-            ...generated,
-            senderId: user?.uid,
-            senderName: user?.displayName ?? '',
-            status: 'generated',
-          });
-          this.focus.clearActiveElement();
-          void this.router.navigateByUrl('/review-whisper').finally(() => {
-            this.isGenerating = false;
-          });
-        });
-      },
-      error: e => {
-        this.zone.run(() => {
-          this.error = e.message;
-          this.isGenerating = false;
-        });
-      },
-    });
->>>>>>> 09694cadd8f9c8972e00710fbc09737a516f8111
   }
 }
