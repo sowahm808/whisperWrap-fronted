@@ -69,8 +69,22 @@ import { FocusService } from '../services/focus.service';
               <ion-text class="error-text" *ngIf="passwordMessage">{{ passwordMessage }}</ion-text>
               <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
 
-              <ion-button expand="block" type="submit" [disabled]="isSubmitting">
+              <ion-button expand="block" type="submit" [disabled]="isSubmitting || isGoogleSubmitting">
                 {{ isSubmitting ? 'Logging in...' : 'Login' }}
+              </ion-button>
+
+              <div class="auth-divider" aria-hidden="true"><span>or</span></div>
+
+              <ion-button
+                class="google-auth-button"
+                expand="block"
+                fill="outline"
+                type="button"
+                [disabled]="isSubmitting || isGoogleSubmitting"
+                (click)="continueWithGoogle()"
+              >
+                <span class="google-mark" aria-hidden="true">G</span>
+                {{ isGoogleSubmitting ? 'Connecting to Google...' : 'Continue with Google' }}
               </ion-button>
               <ion-button expand="block" fill="clear" type="button" (click)="navigateToSignup()">
                 Create account
@@ -85,6 +99,7 @@ import { FocusService } from '../services/focus.service';
 export class LoginPage {
   error = '';
   isSubmitting = false;
+  isGoogleSubmitting = false;
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -135,6 +150,30 @@ export class LoginPage {
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
           this.isSubmitting = false;
+        });
+      },
+    });
+  }
+
+  continueWithGoogle() {
+    if (this.isSubmitting || this.isGoogleSubmitting) return;
+
+    this.error = '';
+    this.isGoogleSubmitting = true;
+    this.blurActiveElement();
+
+    this.auth.loginWithGoogle().subscribe({
+      next: () => {
+        this.zone.run(() => {
+          void this.router.navigateByUrl('/dashboard').finally(() => {
+            this.isGoogleSubmitting = false;
+          });
+        });
+      },
+      error: e => {
+        this.zone.run(() => {
+          this.error = getAuthErrorMessage(e);
+          this.isGoogleSubmitting = false;
         });
       },
     });
