@@ -24,7 +24,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
 import { UserProfile, WhisperRecord } from '../services/models';
-
+import { NavController } from '@ionic/angular/standalone';
 @Component({
   standalone: true,
   imports: [
@@ -128,12 +128,13 @@ export class DashboardPage implements OnInit, OnDestroy {
   private destroyed = false;
 
   constructor(
-    private auth: AuthService,
-    private db: Firestore,
-    private router: Router,
-    private focus: FocusService,
-    private zone: NgZone,
-  ) {}
+  private auth: AuthService,
+  private db: Firestore,
+  private router: Router,
+  private navCtrl: NavController,
+  private focus: FocusService,
+  private zone: NgZone,
+) {}
 
   async ngOnInit() {
     const user = await this.auth.waitForUser();
@@ -195,47 +196,52 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.unsubscribeWhispers?.();
   }
 
-  async navigateToCreateWhisper(event?: Event) {
-    if (this.isNavigating) return;
+ async navigateToCreateWhisper(event?: Event) {
+  if (this.isNavigating) return;
 
-    this.isNavigating = true;
+  this.isNavigating = true;
 
-    try {
-      this.blurEventTarget(event);
-      this.focus.clearActiveElement();
+  try {
+    const target = event?.target as HTMLElement | null;
+    const currentTarget = event?.currentTarget as HTMLElement | null;
 
-      await this.waitForFocusToClear();
-
-      const navigated = await this.router.navigateByUrl('/create-whisper', {
-        replaceUrl: false,
-      });
-
-      if (!navigated) {
-        console.warn('Navigation to /create-whisper was cancelled.');
-      }
-    } catch (error) {
-      console.error('Navigation to Create WhisperWrap failed:', error);
-    } finally {
-      this.isNavigating = false;
-    }
-  }
-
-  logout() {
-    if (this.isNavigating) return;
-
-    this.isNavigating = true;
+    target?.blur?.();
+    currentTarget?.blur?.();
     this.focus.clearActiveElement();
 
-    this.auth.logout().subscribe({
-      next: () => {
-        void this.router.navigateByUrl('/login', { replaceUrl: true });
-      },
-      error: error => {
-        console.error('Logout failed:', error);
-        this.isNavigating = false;
-      },
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => resolve());
     });
+
+    await this.zone.run(() =>
+      this.navCtrl.navigateForward('/create-whisper', {
+        animated: false,
+      }),
+    );
+  } catch (error) {
+    console.error('Create WhisperWrap navigation failed:', error);
+    this.isNavigating = false;
   }
+}
+
+ logout() {
+  if (this.isNavigating) return;
+
+  this.isNavigating = true;
+  this.focus.clearActiveElement();
+
+  this.auth.logout().subscribe({
+    next: () => {
+      void this.navCtrl.navigateRoot('/login', {
+        animated: false,
+      });
+    },
+    error: error => {
+      console.error('Logout failed:', error);
+      this.isNavigating = false;
+    },
+  });
+}
 
   private blurEventTarget(event?: Event) {
     const target = event?.target as HTMLElement | null;
