@@ -2,13 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import {
   Auth,
   User,
+  UserCredential,
   authState,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
+  getRedirectResult,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
 } from '@angular/fire/auth';
@@ -28,35 +30,21 @@ export class AuthService {
     return from(signInWithEmailAndPassword(this.auth, email.trim(), password));
   }
 
-  loginWithGoogle() {
-  const provider = new GoogleAuthProvider();
+  loginWithGoogleRedirect() {
+    return from(signInWithRedirect(this.auth, this.createGoogleProvider()));
+  }
 
-  provider.setCustomParameters({
-    prompt: 'select_account',
-  });
+  completeGoogleRedirect() {
+    return from(
+      getRedirectResult(this.auth).then(async credential => {
+        if (!credential) return null;
 
-  return from(
-    signInWithPopup(this.auth, provider).then(async credential => {
-      const user = credential.user;
+        await this.saveGoogleUserProfile(credential);
 
-      await setDoc(
-        doc(this.db, 'users', user.uid),
-        {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          subscriptionStatus: 'inactive',
-          authProvider: 'google',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
-
-      return credential;
-    }),
-  );
-}
+        return credential;
+      }),
+    );
+  }
 
   signup(email: string, password: string, displayName: string) {
     const cleanEmail = email.trim();
@@ -150,6 +138,34 @@ export class AuthService {
         email,
         displayName,
         ...(isNewUser ? { subscriptionStatus: 'inactive', createdAt: serverTimestamp() } : {}),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  }
+
+  private createGoogleProvider() {
+    const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: 'select_account',
+    });
+
+    return provider;
+  }
+
+  private saveGoogleUserProfile(credential: UserCredential) {
+    const user = credential.user;
+    const additionalUserInfo = getAdditionalUserInfo(credential);
+
+    return setDoc(
+      doc(this.db, 'users', user.uid),
+      {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        authProvider: 'google',
+        ...(additionalUserInfo?.isNewUser ? { subscriptionStatus: 'inactive', createdAt: serverTimestamp() } : {}),
         updatedAt: serverTimestamp(),
       },
       { merge: true },

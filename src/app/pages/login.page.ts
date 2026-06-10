@@ -1,5 +1,5 @@
 import { NgIf } from '@angular/common';
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -96,7 +96,7 @@ import { FocusService } from '../services/focus.service';
     </ion-content>
   `,
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   error = '';
   isSubmitting = false;
   isGoogleSubmitting = false;
@@ -128,6 +128,39 @@ export class LoginPage {
     if (!control.touched || !control.errors) return '';
     if (control.errors['required']) return 'Password is required.';
     return '';
+  }
+
+  ngOnInit() {
+    const hadPendingGoogleRedirect = sessionStorage.getItem('googleAuthRedirectPending') === 'true';
+
+    if (hadPendingGoogleRedirect) {
+      this.isGoogleSubmitting = true;
+    }
+
+    this.auth.completeGoogleRedirect().subscribe({
+      next: credential => {
+        sessionStorage.removeItem('googleAuthRedirectPending');
+
+        if (!credential) {
+          this.isGoogleSubmitting = false;
+          return;
+        }
+
+        this.zone.run(() => {
+          void this.router.navigateByUrl('/dashboard').finally(() => {
+            this.isGoogleSubmitting = false;
+          });
+        });
+      },
+      error: e => {
+        sessionStorage.removeItem('googleAuthRedirectPending');
+
+        this.zone.run(() => {
+          this.error = getAuthErrorMessage(e);
+          this.isGoogleSubmitting = false;
+        });
+      },
+    });
   }
 
   submit() {
@@ -162,15 +195,12 @@ export class LoginPage {
     this.isGoogleSubmitting = true;
     this.blurActiveElement();
 
-    this.auth.loginWithGoogle().subscribe({
-      next: () => {
-        this.zone.run(() => {
-          void this.router.navigateByUrl('/dashboard').finally(() => {
-            this.isGoogleSubmitting = false;
-          });
-        });
-      },
+    sessionStorage.setItem('googleAuthRedirectPending', 'true');
+
+    this.auth.loginWithGoogleRedirect().subscribe({
       error: e => {
+        sessionStorage.removeItem('googleAuthRedirectPending');
+
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
           this.isGoogleSubmitting = false;
