@@ -53,9 +53,9 @@ import { UserProfile, WhisperRecord } from '../services/models';
               You can draft a WhisperWrap now. Sending may still require account activation.
             </ion-text>
 
-            <ion-button expand="block" (click)="navigateToCreateWhisper()">
-              Create WhisperWrap
-            </ion-button>
+            <ion-button expand="block" (click)="navigateToCreateWhisper($event)">
+  Create WhisperWrap
+</ion-button>
             <ion-button fill="clear" expand="block" (click)="logout()">Logout</ion-button>
           </ion-card-content>
         </ion-card>
@@ -173,9 +173,15 @@ async ngOnInit() {
     this.unsubscribeWhispers?.();
   }
 
-navigateToCreateWhisper() {
+async navigateToCreateWhisper(event?: Event) {
+  const target = event?.target as HTMLElement | null;
+  target?.blur();
+
   this.focus.clearActiveElement();
-  void this.router.navigateByUrl('/create-whisper', { replaceUrl: false });
+
+  await new Promise(resolve => requestAnimationFrame(resolve));
+
+  await this.router.navigateByUrl('/create-whisper');
 }
 
 logout() {

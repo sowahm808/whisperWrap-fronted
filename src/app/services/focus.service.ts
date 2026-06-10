@@ -3,24 +3,18 @@ import { Injectable } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class FocusService {
   clearActiveElement() {
-    const activeElement = this.getDeepActiveElement();
+    const activeElement = document.activeElement as HTMLElement | null;
 
-    if (activeElement instanceof HTMLElement) {
+    if (activeElement && typeof activeElement.blur === 'function') {
       activeElement.blur();
     }
 
-    if (document.activeElement instanceof HTMLElement && document.activeElement !== activeElement) {
-      document.activeElement.blur();
-    }
-  }
+    const shadowActiveElement = activeElement?.shadowRoot?.activeElement as HTMLElement | null;
 
-  private getDeepActiveElement(root: Document | ShadowRoot = document): Element | null {
-    let activeElement = root.activeElement;
-
-    while (activeElement?.shadowRoot?.activeElement) {
-      activeElement = activeElement.shadowRoot.activeElement;
+    if (shadowActiveElement && typeof shadowActiveElement.blur === 'function') {
+      shadowActiveElement.blur();
     }
 
-    return activeElement;
+    document.body.focus();
   }
 }
