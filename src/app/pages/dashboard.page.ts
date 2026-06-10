@@ -136,13 +136,16 @@ export class DashboardPage implements OnDestroy {
     this.unsubscribeWhispers?.();
   }
 
-  navigateToCreateWhisper() {
-    this.focus.clearActiveElement();
-    this.router.navigateByUrl('/create-whisper');
-  }
+navigateToCreateWhisper() {
+  this.focus.clearActiveElement();
+  void this.router.navigateByUrl('/create-whisper', { replaceUrl: false });
+}
 
-  logout() {
-    this.focus.clearActiveElement();
-    this.auth.logout().subscribe(() => this.router.navigateByUrl('/login'));
-  }
+logout() {
+  this.focus.clearActiveElement();
+
+  this.auth.logout().subscribe(() => {
+    void this.router.navigateByUrl('/login', { replaceUrl: true });
+  });
+}
 }

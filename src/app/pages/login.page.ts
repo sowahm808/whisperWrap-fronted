@@ -138,14 +138,17 @@ export class LoginPage {
 
     this.isSubmitting = true;
     this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
-      next: () => {
-        this.zone.run(() => {
-          this.blurActiveElement();
-          void this.router.navigateByUrl('/dashboard').finally(() => {
-            this.isSubmitting = false;
-          });
-        });
-      },
+     next: () => {
+  this.zone.run(async () => {
+    this.blurActiveElement();
+
+    try {
+      await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+    } finally {
+      this.isSubmitting = false;
+    }
+  });
+},
       error: e => {
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
@@ -164,12 +167,14 @@ export class LoginPage {
 
     this.auth.loginWithGoogle().subscribe({
       next: () => {
-        this.zone.run(() => {
-          void this.router.navigateByUrl('/dashboard').finally(() => {
-            this.isGoogleSubmitting = false;
-          });
-        });
-      },
+  this.zone.run(async () => {
+    try {
+      await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+    } finally {
+      this.isGoogleSubmitting = false;
+    }
+  });
+},
       error: e => {
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
@@ -180,9 +185,9 @@ export class LoginPage {
   }
 
   navigateToSignup() {
-    this.blurActiveElement();
-    this.router.navigateByUrl('/signup');
-  }
+  this.blurActiveElement();
+  void this.router.navigateByUrl('/signup', { replaceUrl: false });
+}
 
   private blurActiveElement() {
     this.focus.clearActiveElement();
