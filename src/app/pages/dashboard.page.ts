@@ -62,15 +62,21 @@ import { UserProfile, WhisperRecord } from '../services/models';
               You can draft a WhisperWrap now. Sending may still require account activation.
             </ion-text>
 
-            <ion-button
+            <!-- <ion-button
               expand="block"
               type="button"
               [disabled]="isNavigating"
               (click)="navigateToCreateWhisper($event)"
             >
               {{ isNavigating ? 'Opening...' : 'Create WhisperWrap' }}
-            </ion-button>
-
+            </ion-button> -->
+<ion-button
+  expand="block"
+  type="button"
+  routerLink="/create-whisper"
+>
+  Create WhisperWrap
+</ion-button>
             <ion-button
               fill="clear"
               expand="block"
@@ -213,30 +219,30 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.unsubscribeWhispers?.();
   }
 
-  async navigateToCreateWhisper(event?: Event): Promise<void> {
-    if (this.isNavigating) return;
+  // async navigateToCreateWhisper(event?: Event): Promise<void> {
+  //   if (this.isNavigating) return;
 
-    this.navigationError = '';
-    this.isNavigating = true;
+  //   this.navigationError = '';
+  //   this.isNavigating = true;
 
-    this.blurEventTarget(event);
-    this.focus.clearActiveElement();
+  //   this.blurEventTarget(event);
+  //   this.focus.clearActiveElement();
 
-    try {
-      const navigated = await this.zone.run(() =>
-        this.router.navigateByUrl('/create-whisper'),
-      );
+  //   try {
+  //     const navigated = await this.zone.run(() =>
+  //       this.router.navigateByUrl('/create-whisper'),
+  //     );
 
-      if (!navigated) {
-        this.navigationError = 'Could not open the Create WhisperWrap page.';
-      }
-    } catch (error) {
-      console.error('Create WhisperWrap navigation failed:', error);
-      this.navigationError = 'Could not open the Create WhisperWrap page.';
-    } finally {
-      this.isNavigating = false;
-    }
-  }
+  //     if (!navigated) {
+  //       this.navigationError = 'Could not open the Create WhisperWrap page.';
+  //     }
+  //   } catch (error) {
+  //     console.error('Create WhisperWrap navigation failed:', error);
+  //     this.navigationError = 'Could not open the Create WhisperWrap page.';
+  //   } finally {
+  //     this.isNavigating = false;
+  //   }
+  // }
 
   logout(): void {
     if (this.isNavigating) return;
