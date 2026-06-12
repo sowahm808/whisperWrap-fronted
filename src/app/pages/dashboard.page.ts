@@ -1,6 +1,6 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -48,6 +48,7 @@ import { UserProfile, WhisperRecord } from '../services/models';
 
     <ion-content>
       <main class="page-shell">
+
         <section class="hero-copy">
           <p class="eyebrow">MVP Flow</p>
           <h1>Welcome{{ profile?.displayName ? ', ' + profile?.displayName : '' }}.</h1>
@@ -107,15 +108,6 @@ import { UserProfile, WhisperRecord } from '../services/models';
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="form-card compact-card">
-          <ion-card-content>
-            <h2>Status tracking</h2>
-            <p class="muted">The backend and Firestore collections track each message through these MVP statuses.</p>
-            <ul class="status-list">
-              <li *ngFor="let status of statuses">{{ status }}</li>
-            </ul>
-          </ion-card-content>
-        </ion-card>
       </main>
     </ion-content>
   `,
@@ -140,7 +132,22 @@ export class DashboardPage implements OnInit, OnDestroy {
     private router: Router,
     private focus: FocusService,
     private zone: NgZone,
-  ) {}
+  ) {
+    // 🔥 THIS FIXES YOUR "OPENING..." STUCK STATE
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.isNavigating = true;
+      }
+
+      if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.isNavigating = false;
+      }
+    });
+  }
 
   async ngOnInit(): Promise<void> {
     try {
@@ -149,24 +156,18 @@ export class DashboardPage implements OnInit, OnDestroy {
       if (this.destroyed) return;
 
       if (!user) {
-        await this.zone.run(() =>
-          this.router.navigateByUrl('/login', { replaceUrl: true }),
-        );
+        await this.router.navigateByUrl('/login', { replaceUrl: true });
         return;
       }
 
       this.profileSub = this.auth.userProfile$(user.uid).subscribe({
         next: profile => {
-          this.zone.run(() => {
-            this.profile = profile;
-            this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
-          });
+          this.profile = profile;
+          this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
         },
         error: error => {
           console.error('User profile subscription failed:', error);
-          this.zone.run(() => {
-            this.subscriptionStatus = 'inactive';
-          });
+          this.subscriptionStatus = 'inactive';
         },
       });
 
@@ -180,30 +181,20 @@ export class DashboardPage implements OnInit, OnDestroy {
       this.unsubscribeWhispers = onSnapshot(
         whispersQuery,
         snapshot => {
-          this.zone.run(() => {
-            this.statusError = '';
-            this.recentWhispers = snapshot.docs.map(snapshotDoc => ({
-              id: snapshotDoc.id,
-              ...snapshotDoc.data(),
-            })) as WhisperRecord[];
-          });
+          this.statusError = '';
+          this.recentWhispers = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+          })) as WhisperRecord[];
         },
         error => {
-          this.zone.run(() => {
-            console.error('Recent WhisperWrap query failed:', error);
-
-            if (error?.code === 'failed-precondition') {
-              this.statusError = 'Recent WhisperWraps need a Firestore index before they can load.';
-              return;
-            }
-
-            this.statusError = 'Could not load recent WhisperWrap statuses.';
-          });
+          console.error(error);
+          this.statusError = 'Could not load recent WhisperWrap statuses.';
         },
       );
     } catch (error) {
       console.error('Dashboard initialization failed:', error);
-      this.navigationError = 'Could not load dashboard. Please refresh and try again.';
+      this.navigationError = 'Could not load dashboard. Please refresh.';
     }
   }
 
@@ -214,47 +205,33 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   async navigateToCreateWhisper(event?: Event): Promise<void> {
-    //if (this.isNavigating) return;
-
     this.navigationError = '';
-    this.isNavigating = true;
-
-    this.blurEventTarget(event);
     this.focus.clearActiveElement();
 
-    try {
-      const navigated = await this.zone.run(() =>
-        this.router.navigateByUrl('/create-whisper'),
-      );
+    this.blurEventTarget(event);
 
-      if (!navigated) {
-        this.navigationError = 'Could not open the Create WhisperWrap page.';
+    try {
+      const ok = await this.router.navigateByUrl('/create-whisper');
+
+      if (!ok) {
+        this.navigationError = 'Could not open Create WhisperWrap.';
       }
     } catch (error) {
-      console.error('Create WhisperWrap navigation failed:', error);
-      this.navigationError = 'Could not open the Create WhisperWrap page.';
-    } finally {
-      this.isNavigating = false;
+      console.error(error);
+      this.navigationError = 'Navigation failed.';
     }
   }
 
   logout(): void {
-    if (this.isNavigating) return;
-
-    this.navigationError = '';
-    this.isNavigating = true;
     this.focus.clearActiveElement();
 
     this.auth.logout().subscribe({
       next: () => {
-        void this.zone.run(() =>
-          this.router.navigateByUrl('/login', { replaceUrl: true }),
-        );
+        void this.router.navigateByUrl('/login', { replaceUrl: true });
       },
       error: error => {
-        console.error('Logout failed:', error);
-        this.navigationError = 'Logout failed. Please try again.';
-        this.isNavigating = false;
+        console.error(error);
+        this.navigationError = 'Logout failed.';
       },
     });
   }
