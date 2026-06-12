@@ -40,7 +40,7 @@ import { FocusService } from '../services/focus.service';
         <!-- <ion-title>WhisperWrap</ion-title> -->
         <ion-title>
           <span class="brand-title">
-            <img src="assets/whisperwrap-logo.png" alt="" aria-hidden="true" class="brand-title-logo" />
+            <img src="assets/whisperwraplogo.png" alt="" aria-hidden="true" class="brand-title-logo" />
             WhisperWrap
           </span>
         </ion-title>
