@@ -51,7 +51,7 @@ import { FocusService } from '../services/focus.service';
       <main class="page-shell">
 <section class="hero-copy login-hero-copy">
           <img
-            src="assets/whisperwrap-logo.png"
+            src="assets/whisperwraplogo.png"
             alt="WhisperWrap logo"
             class="login-logo"
             width="220"
