@@ -37,14 +37,26 @@ import { FocusService } from '../services/focus.service';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>WhisperWrap</ion-title>
+        <!-- <ion-title>WhisperWrap</ion-title> -->
+        <ion-title>
+          <span class="brand-title">
+            <img src="assets/whisperwrap-logo.png" alt="" aria-hidden="true" class="brand-title-logo" />
+            WhisperWrap
+          </span>
+        </ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
       <main class="page-shell">
-        <section class="hero-copy">
-          <p class="eyebrow">WhisperComp MVP</p>
+<section class="hero-copy login-hero-copy">
+          <img
+            src="assets/whisperwrap-logo.png"
+            alt="WhisperWrap logo"
+            class="login-logo"
+            width="220"
+            height="220"
+          />          <p class="eyebrow">WhisperComp MVP</p>
           <h1>Send a thoughtful, consent-based WhisperWrap.</h1>
           <p>Log in to draft, review, and send a scripture-centered message.</p>
         </section>
