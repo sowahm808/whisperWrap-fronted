@@ -46,9 +46,21 @@ import { WhisperService } from '../services/whisper.service';
 
     <ion-content>
       <main class="page-shell">
+        <section class="hero-copy">
+          <p class="eyebrow">Step 2 of 3</p>
+          <h1>Review every word.</h1>
+          <p class="muted">Edit the draft, add audio if needed, then send the recipient a consent email.</p>
+        </section>
+
+        <ol class="progress-steps" aria-label="WhisperWrap progress">
+          <li>create</li>
+          <li class="active">Review</li>
+          <li>Send</li>
+        </ol>
+
         <ion-card class="form-card" *ngIf="service.draft as draft; else noDraft">
           <ion-card-content>
-            <p class="muted">Review and edit the AI draft before a consent email is sent.</p>
+            <p class="muted">Nothing is delivered until you confirm and send consent.</p>
 
             <ion-item>
               <ion-input label="Title" labelPlacement="stacked" [(ngModel)]="draft.title" (ionBlur)="persistDraft()" />
@@ -69,6 +81,7 @@ import { WhisperService } from '../services/whisper.service';
             <section class="upload-panel" *ngIf="draft.deliveryFormat !== 'text'">
               <label for="audio-upload">Optional audio recording</label>
               <input id="audio-upload" type="file" accept="audio/*" (change)="upload($event)" />
+              <p class="muted">Attach MP3, M4A, WAV, or another browser-supported audio file.</p>
               <p class="muted" *ngIf="draft.audioUrl">Audio uploaded and attached.</p>
               <audio *ngIf="draft.audioUrl" controls [src]="draft.audioUrl"></audio>
             </section>
@@ -218,7 +231,9 @@ export class ReviewWhisperPage {
             unwrapLink: response.unwrapLink,
           });
           this.focus.clearActiveElement();
-          this.router.navigateByUrl('/whisper-sent');
+          void this.router.navigateByUrl('/whisper-sent').finally(() => {
+            this.isSending = false;
+          });
         },
         error: e => {
           this.error = e.message;

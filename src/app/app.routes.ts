@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { authMatchGuard } from './guards/auth.guards';
-// import { publicUnwrapGuard } from './guards/auth.guards';
 
 export const appRoutes: Routes = [
   {
@@ -51,7 +50,6 @@ export const appRoutes: Routes = [
 
   {
     path: 'unwrap/:token',
-    canActivate: [authMatchGuard],
     loadComponent: () =>
       import('./pages/unwrap-whisper.page').then(m => m.UnwrapWhisperPage),
   },
