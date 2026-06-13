@@ -1,4 +1,5 @@
 import 'zone.js';
+import { ErrorHandler } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, RouteReuseStrategy } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -12,9 +13,11 @@ import { appRoutes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
 import { authInterceptor } from './app/services/auth.interceptor';
+import { AppErrorHandler } from './app/services/app-error-handler.service';
 
 bootstrapApplication(AppComponent, {
   providers: [
+    { provide: ErrorHandler, useClass: AppErrorHandler },
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideRouter(appRoutes),
     provideHttpClient(withInterceptors([authInterceptor])),
@@ -23,6 +26,8 @@ bootstrapApplication(AppComponent, {
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
     provideStorage(() => getStorage()),
-    provideAnalytics(() => getAnalytics())
-  ]
-}).catch((err) => console.error(err));
+    provideAnalytics(() => getAnalytics()),
+  ],
+}).catch((error: unknown) => {
+  console.error('[WhisperWrap bootstrap]', error);
+});

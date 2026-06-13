@@ -1,4 +1,4 @@
-import { NgFor, NgIf } from '@angular/common';
+import { NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   Router,
@@ -35,6 +35,7 @@ import { UserProfile, WhisperRecord } from '../services/models';
 @Component({
   standalone: true,
   imports: [
+    NgClass,
     NgFor,
     NgIf,
     IonContent,
@@ -54,57 +55,61 @@ import { UserProfile, WhisperRecord } from '../services/models';
     </ion-header>
 
     <ion-content>
-      <main class="page-shell">
-
-        <section class="hero-copy">
-          <h1>
-            Welcome{{ profile?.displayName ? ', ' + profile?.displayName : '' }}
-          </h1>
+      <main class="page-shell dashboard-shell">
+        <section class="hero-copy dashboard-hero">
+          <p class="eyebrow">Dashboard</p>
+          <h1>Welcome{{ profile?.displayName ? ', ' + profile?.displayName : '' }}.</h1>
+          <p class="muted">Create, review, and track consent-first WhisperWrap messages from one calm workspace.</p>
         </section>
 
-        <ion-card>
+        <ion-card class="summary-card">
           <ion-card-content>
+            <div class="summary-grid">
+              <div>
+                <span class="summary-label">Subscription</span>
+                <strong class="summary-value" [ngClass]="subscriptionStatus === 'active' ? 'status-active' : 'status-inactive'">
+                  {{ subscriptionStatus }}
+                </strong>
+              </div>
+              <div>
+                <span class="summary-label">Recent wraps</span>
+                <strong class="summary-value">{{ recentWhispers.length }}</strong>
+              </div>
+            </div>
 
-            <p><strong>Subscription:</strong> {{ subscriptionStatus }}</p>
-
-            <ion-button
-              expand="block"
-              (click)="navigateToCreateWhisper()"
-              [disabled]="isNavigating"
-            >
+            <ion-button expand="block" (click)="navigateToCreateWhisper()" [disabled]="isNavigating">
               {{ isNavigating ? 'Opening...' : 'Create WhisperWrap' }}
             </ion-button>
 
-            <ion-button
-              fill="clear"
-              expand="block"
-              (click)="logout()"
-            >
-              Logout
-            </ion-button>
+            <ion-button fill="clear" expand="block" (click)="logout()">Logout</ion-button>
 
-            <ion-text *ngIf="navigationError" color="danger">
-              {{ navigationError }}
-            </ion-text>
-
+            <ion-text class="error-text" *ngIf="navigationError">{{ navigationError }}</ion-text>
           </ion-card-content>
         </ion-card>
 
-        <ion-card>
+        <ion-card class="form-card compact-card">
           <ion-card-content>
-
-            <h2>Recent WhisperWraps</h2>
-
-            <p *ngIf="!recentWhispers.length">No WhisperWraps yet.</p>
-
-            <div *ngFor="let whisper of recentWhispers">
-              <strong>{{ whisper.title || whisper.recipientName }}</strong>
-              <p>{{ whisper.recipientName }} • {{ whisper.deliveryFormat }}</p>
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Activity</p>
+                <h2>Recent WhisperWraps</h2>
+              </div>
             </div>
 
+            <div class="empty-state" *ngIf="!recentWhispers.length">
+              <strong>No WhisperWraps yet</strong>
+              <p class="muted">Start with a recipient, tone, delivery format, and sender intent.</p>
+            </div>
+
+            <div class="whisper-row" *ngFor="let whisper of recentWhispers">
+              <div>
+                <strong>{{ whisper.title || whisper.recipientName }}</strong>
+                <p>{{ whisper.recipientName }} • {{ formatDelivery(whisper.deliveryFormat) }}</p>
+              </div>
+              <span class="status-pill">{{ formatStatus(whisper.status) }}</span>
+            </div>
           </ion-card-content>
         </ion-card>
-
       </main>
     </ion-content>
   `,
@@ -127,9 +132,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     private router: Router,
     private focus: FocusService,
   ) {
-    /**
-     * 🔥 FIX: prevent stuck "Opening..." state
-     */
     this.routerSub = this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.isNavigating = true;
@@ -147,9 +149,6 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     try {
-      /**
-       * ✅ FIX: use your actual AuthService API
-       */
       const user = await this.auth.waitForUser();
 
       if (!user) {
@@ -157,17 +156,15 @@ export class DashboardPage implements OnInit, OnDestroy {
         return;
       }
 
-      /**
-       * PROFILE STREAM
-       */
-      this.profileSub = this.auth.userProfile$(user.uid).subscribe(profile => {
-        this.profile = profile;
-        this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
+      this.profileSub = this.auth.userProfile$(user.uid).subscribe({
+        next: profile => {
+          this.profile = profile;
+          this.subscriptionStatus = profile?.subscriptionStatus ?? 'inactive';
+        },
+        error: () => {
+          this.navigationError = 'Profile details could not be loaded.';
+        },
       });
-
-      /**
-       * FIRESTORE STREAM
-       */
       const q = query(
         collection(this.db, 'whispers'),
         where('senderId', '==', user.uid),
@@ -175,15 +172,19 @@ export class DashboardPage implements OnInit, OnDestroy {
         limit(10),
       );
 
-      this.unsubscribeWhispers = onSnapshot(q, snapshot => {
-        this.recentWhispers = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data(),
-        })) as WhisperRecord[];
-      });
-
-    } catch (err) {
-      console.error(err);
+      this.unsubscribeWhispers = onSnapshot(
+        q,
+        snapshot => {
+          this.recentWhispers = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+          })) as WhisperRecord[];
+        },
+        () => {
+          this.navigationError = 'Recent WhisperWraps could not be loaded.';
+        },
+      );
+    } catch {
       this.navigationError = 'Failed to load dashboard.';
     }
   }
@@ -200,10 +201,19 @@ export class DashboardPage implements OnInit, OnDestroy {
 
     try {
       await this.router.navigateByUrl('/create-whisper');
-    } catch (err) {
-      console.error(err);
+    } catch {
       this.navigationError = 'Navigation failed.';
     }
+  }
+
+  formatDelivery(format?: string): string {
+    if (!format) return 'Not selected';
+    return format.replace('_', ' + ');
+  }
+
+  formatStatus(status?: string): string {
+    if (!status) return 'draft';
+    return status.replace('_', ' ');
   }
 
   logout(): void {

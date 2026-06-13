@@ -17,9 +17,21 @@ import { WhisperService } from '../services/whisper.service';
 
     <ion-content>
       <main class="page-shell">
-        <ion-card class="form-card">
+        <section class="hero-copy">
+          <p class="eyebrow">Step 3 of 3</p>
+          <h1>WhisperWrap sent.</h1>
+          <p class="muted">The recipient receives a secure consent link before any message content is revealed.</p>
+        </section>
+
+        <ol class="progress-steps" aria-label="WhisperWrap progress">
+          <li>Create</li>
+          <li>Review</li>
+          <li class="active">Sent</li>
+        </ol>
+
+        <ion-card class="form-card success-card">
           <ion-card-content>
-            <h1>Consent email sent.</h1>
+            <h2>Consent email sent.</h2>
             <p>The recipient can accept the secure unwrap link before reading or listening.</p>
             <p *ngIf="service.draft?.unwrapLink" class="muted">Unwrap link: {{ service.draft?.unwrapLink }}</p>
             <ion-button expand="block" (click)="navigateToDashboard()">Back to Dashboard</ion-button>

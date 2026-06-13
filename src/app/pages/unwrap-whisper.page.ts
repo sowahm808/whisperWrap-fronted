@@ -22,18 +22,23 @@ import { WhisperService } from '../services/whisper.service';
             <ng-container *ngIf="!isLoading; else loading">
               <ng-container *ngIf="data; else unavailable">
                 <section *ngIf="!accepted" class="consent-panel">
-                  <p>{{ data.senderName || 'Someone' }} has sent you a WhisperWrap through WhisperComp.</p>
-                  <p>Would you like to unwrap it?</p>
+                  <p class="eyebrow">Consent required</p>
+                  <h1>You have a private WhisperWrap.</h1>
+                  <p>{{ data.senderName || 'Someone' }} has sent you a WhisperWrap through WhisperWrap.</p>
+                  <p>Would you like to unwrap it now?</p>
                   <ion-button expand="block" (click)="accept()" [disabled]="isAccepting">
                     {{ isAccepting ? 'Opening...' : 'Accept and View' }}
                   </ion-button>
                 </section>
 
                 <section *ngIf="accepted" class="message-panel">
+                  <p class="eyebrow">Unwrapped message</p>
                   <h1>{{ data.title }}</h1>
                   <p class="message-text">{{ data.message }}</p>
-                  <h2>{{ data.scriptureReference }}</h2>
-                  <p>{{ data.scriptureText }}</p>
+                  <div class="scripture-card">
+                    <h2>{{ data.scriptureReference }}</h2>
+                    <p>{{ data.scriptureText }}</p>
+                  </div>
                   <h2>Prayer</h2>
                   <p>{{ data.shortPrayer }}</p>
                   <audio *ngIf="data.audioUrl" controls [src]="data.audioUrl" (play)="markListened()"></audio>

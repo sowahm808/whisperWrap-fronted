@@ -37,7 +37,6 @@ import { FocusService } from '../services/focus.service';
   template: `
     <ion-header>
       <ion-toolbar>
-        <!-- <ion-title>WhisperWrap</ion-title> -->
         <ion-title>
           <span class="brand-title">
             <img src="assets/whisperwraplogo.png" alt="" aria-hidden="true" class="brand-title-logo" />
@@ -48,17 +47,18 @@ import { FocusService } from '../services/focus.service';
     </ion-header>
 
     <ion-content>
-      <main class="page-shell">
-<section class="hero-copy login-hero-copy">
+      <main class="page-shell auth-shell">
+        <section class="hero-copy login-hero-copy">
           <img
             src="assets/whisperwraplogo.png"
             alt="WhisperWrap logo"
             class="login-logo"
             width="220"
             height="220"
-          />          <p class="eyebrow">WhisperComp MVP</p>
-          <h1>Send a thoughtful, consent-based WhisperWrap.</h1>
-          <p>Log in to draft, review, and send a scripture-centered message.</p>
+          />
+          <p class="eyebrow">Private • consent-first • scripture-centered</p>
+          <h1>Send meaningful words with care.</h1>
+          <p>Draft, review, and share a secure WhisperWrap only after your recipient chooses to unwrap it.</p>
         </section>
 
         <ion-card class="form-card">
@@ -183,17 +183,17 @@ export class LoginPage implements OnInit {
 
     this.isSubmitting = true;
     this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
-     next: () => {
-  this.zone.run(async () => {
-    this.blurActiveElement();
+      next: () => {
+        this.zone.run(async () => {
+          this.blurActiveElement();
 
-    try {
-      await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
-    } finally {
-      this.isSubmitting = false;
-    }
-  });
-},
+          try {
+            await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+          } finally {
+            this.isSubmitting = false;
+          }
+        });
+      },
       error: e => {
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
@@ -212,14 +212,14 @@ export class LoginPage implements OnInit {
 
     this.auth.loginWithGoogle().subscribe({
       next: () => {
-  this.zone.run(async () => {
-    try {
-      await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
-    } finally {
-      this.isGoogleSubmitting = false;
-    }
-  });
-},
+        this.zone.run(async () => {
+          try {
+            await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+          } finally {
+            this.isGoogleSubmitting = false;
+          }
+        });
+      },
       error: e => {
         sessionStorage.removeItem('googleAuthRedirectPending');
 
@@ -232,9 +232,9 @@ export class LoginPage implements OnInit {
   }
 
   navigateToSignup() {
-  this.blurActiveElement();
-  void this.router.navigateByUrl('/signup', { replaceUrl: false });
-}
+    this.blurActiveElement();
+    void this.router.navigateByUrl('/signup', { replaceUrl: false });
+  }
 
   private blurActiveElement() {
     this.focus.clearActiveElement();
