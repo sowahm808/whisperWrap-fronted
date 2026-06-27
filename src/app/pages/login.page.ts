@@ -65,7 +65,13 @@ import { FocusService } from '../services/focus.service';
           <ion-card-content>
             <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
               <ion-item>
-                <ion-input label="Email" labelPlacement="stacked" type="email" formControlName="email" autocomplete="email" />
+                <ion-input
+                  label="Email"
+                  labelPlacement="stacked"
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                />
               </ion-item>
               <ion-text class="error-text" *ngIf="emailMessage">{{ emailMessage }}</ion-text>
 
@@ -79,10 +85,15 @@ import { FocusService } from '../services/focus.service';
                 />
               </ion-item>
               <ion-text class="error-text" *ngIf="passwordMessage">{{ passwordMessage }}</ion-text>
+
               <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
               <ion-text class="success-text" *ngIf="resetMessage">{{ resetMessage }}</ion-text>
 
-              <ion-button expand="block" type="submit" [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting">
+              <ion-button
+                expand="block"
+                type="submit"
+                [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting"
+              >
                 {{ isSubmitting ? 'Logging in...' : 'Login' }}
               </ion-button>
 
@@ -109,7 +120,14 @@ import { FocusService } from '../services/focus.service';
                 <span class="google-mark" aria-hidden="true">G</span>
                 {{ isGoogleSubmitting ? 'Connecting to Google...' : 'Continue with Google' }}
               </ion-button>
-              <ion-button expand="block" fill="clear" type="button" (click)="navigateToSignup()">
+
+              <ion-button
+                expand="block"
+                fill="clear"
+                type="button"
+                [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting"
+                (click)="navigateToSignup()"
+              >
                 Create account
               </ion-button>
             </form>
@@ -121,10 +139,12 @@ import { FocusService } from '../services/focus.service';
 })
 export class LoginPage implements OnInit {
   error = '';
+  resetMessage = '';
+
   isSubmitting = false;
   isGoogleSubmitting = false;
   isResetSubmitting = false;
-  resetMessage = '';
+
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -156,7 +176,8 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit() {
-    const hadPendingGoogleRedirect = sessionStorage.getItem('googleAuthRedirectPending') === 'true';
+    const hadPendingGoogleRedirect =
+      sessionStorage.getItem('googleAuthRedirectPending') === 'true';
 
     if (hadPendingGoogleRedirect) {
       this.isGoogleSubmitting = true;
@@ -167,14 +188,18 @@ export class LoginPage implements OnInit {
         sessionStorage.removeItem('googleAuthRedirectPending');
 
         if (!credential) {
-          this.isGoogleSubmitting = false;
+          this.zone.run(() => {
+            this.isGoogleSubmitting = false;
+          });
           return;
         }
 
-        this.zone.run(() => {
-          void this.router.navigateByUrl('/dashboard').finally(() => {
+        this.zone.run(async () => {
+          try {
+            await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+          } finally {
             this.isGoogleSubmitting = false;
-          });
+          }
         });
       },
       error: e => {
@@ -193,14 +218,24 @@ export class LoginPage implements OnInit {
     this.resetMessage = '';
     this.form.markAllAsTouched();
 
-    if (this.form.invalid || this.isSubmitting || this.isResetSubmitting) return;
+    if (
+      this.form.invalid ||
+      this.isSubmitting ||
+      this.isGoogleSubmitting ||
+      this.isResetSubmitting
+    ) {
+      return;
+    }
 
     this.isSubmitting = true;
-    this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
+    this.blurActiveElement();
+
+    const email = this.form.controls.email.value ?? '';
+    const password = this.form.controls.password.value ?? '';
+
+    this.auth.login(email, password).subscribe({
       next: () => {
         this.zone.run(async () => {
-          this.blurActiveElement();
-
           try {
             await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
           } finally {
@@ -218,7 +253,9 @@ export class LoginPage implements OnInit {
   }
 
   continueWithGoogle() {
-    if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) return;
+    if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) {
+      return;
+    }
 
     this.error = '';
     this.resetMessage = '';
@@ -251,19 +288,32 @@ export class LoginPage implements OnInit {
     this.resetMessage = '';
     this.form.controls.email.markAsTouched();
 
-    if (this.form.controls.email.invalid || this.isResetSubmitting) return;
+    if (
+      this.form.controls.email.invalid ||
+      this.isSubmitting ||
+      this.isGoogleSubmitting ||
+      this.isResetSubmitting
+    ) {
+      return;
+    }
 
     this.isResetSubmitting = true;
-    this.auth.sendPasswordResetEmail(this.form.value.email!).subscribe({
+    this.blurActiveElement();
+
+    const email = this.form.controls.email.value ?? '';
+
+    this.auth.resetPassword(email).subscribe({
       next: () => {
         this.zone.run(() => {
-          this.resetMessage = 'Password reset email sent. Check your inbox for next steps.';
+          this.resetMessage =
+            'If this email exists, a password reset link has been sent.';
           this.isResetSubmitting = false;
         });
       },
-      error: e => {
+      error: () => {
         this.zone.run(() => {
-          this.error = getAuthErrorMessage(e);
+          this.resetMessage =
+            'If this email exists, a password reset link has been sent.';
           this.isResetSubmitting = false;
         });
       },
@@ -271,6 +321,10 @@ export class LoginPage implements OnInit {
   }
 
   navigateToSignup() {
+    if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) {
+      return;
+    }
+
     this.blurActiveElement();
     void this.router.navigateByUrl('/signup', { replaceUrl: false });
   }

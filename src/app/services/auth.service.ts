@@ -9,7 +9,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
-  sendPasswordResetEmail,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   getRedirectResult,
   GoogleAuthProvider,
   getAdditionalUserInfo,
@@ -37,10 +37,17 @@ export class AuthService {
     return from(signInWithEmailAndPassword(this.auth, email.trim(), password));
   }
 
-  sendPasswordResetEmail(email: string) {
-    return from(sendPasswordResetEmail(this.auth, email.trim()));
-  }
-
+  // sendPasswordResetEmail(email: string) {
+  //   return from(sendPasswordResetEmail(this.auth, email.trim()));
+  // }
+resetPassword(email: string) {
+  return from(
+    firebaseSendPasswordResetEmail(this.auth, email.trim().toLowerCase(), {
+      url: `${window.location.origin}/login`,
+      handleCodeInApp: false,
+    }),
+  );
+}
   loginWithGoogle() {
     return from(
       signInWithPopup(this.auth, this.createGoogleProvider()).then(async credential => {
