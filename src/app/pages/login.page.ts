@@ -37,7 +37,6 @@ import { FocusService } from '../services/focus.service';
   template: `
     <ion-header>
       <ion-toolbar>
-        <!-- <ion-title>WhisperWrap</ion-title> -->
         <ion-title>
           <span class="brand-title">
             <img src="assets/whisperwraplogo.png" alt="" aria-hidden="true" class="brand-title-logo" />
@@ -48,17 +47,18 @@ import { FocusService } from '../services/focus.service';
     </ion-header>
 
     <ion-content>
-      <main class="page-shell">
-<section class="hero-copy login-hero-copy">
+      <main class="page-shell auth-shell">
+        <section class="hero-copy login-hero-copy">
           <img
             src="assets/whisperwraplogo.png"
             alt="WhisperWrap logo"
             class="login-logo"
             width="220"
             height="220"
-          />          <p class="eyebrow">WhisperComp MVP</p>
-          <h1>Send a thoughtful, consent-based WhisperWrap.</h1>
-          <p>Log in to draft, review, and send a scripture-centered message.</p>
+          />
+          <p class="eyebrow">Private • consent-first • scripture-centered</p>
+          <h1>Send meaningful words with care.</h1>
+          <p>Draft, review, and share a secure WhisperWrap only after your recipient chooses to unwrap it.</p>
         </section>
 
         <ion-card class="form-card">
@@ -80,9 +80,20 @@ import { FocusService } from '../services/focus.service';
               </ion-item>
               <ion-text class="error-text" *ngIf="passwordMessage">{{ passwordMessage }}</ion-text>
               <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
+              <ion-text class="success-text" *ngIf="resetMessage">{{ resetMessage }}</ion-text>
 
-              <ion-button expand="block" type="submit" [disabled]="isSubmitting || isGoogleSubmitting">
+              <ion-button expand="block" type="submit" [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting">
                 {{ isSubmitting ? 'Logging in...' : 'Login' }}
+              </ion-button>
+
+              <ion-button
+                expand="block"
+                fill="clear"
+                type="button"
+                [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting"
+                (click)="sendPasswordReset()"
+              >
+                {{ isResetSubmitting ? 'Sending reset email...' : 'Forgot password?' }}
               </ion-button>
 
               <div class="auth-divider" aria-hidden="true"><span>or</span></div>
@@ -92,7 +103,7 @@ import { FocusService } from '../services/focus.service';
                 expand="block"
                 fill="outline"
                 type="button"
-                [disabled]="isSubmitting || isGoogleSubmitting"
+                [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting"
                 (click)="continueWithGoogle()"
               >
                 <span class="google-mark" aria-hidden="true">G</span>
@@ -112,6 +123,8 @@ export class LoginPage implements OnInit {
   error = '';
   isSubmitting = false;
   isGoogleSubmitting = false;
+  isResetSubmitting = false;
+  resetMessage = '';
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -177,23 +190,24 @@ export class LoginPage implements OnInit {
 
   submit() {
     this.error = '';
+    this.resetMessage = '';
     this.form.markAllAsTouched();
 
-    if (this.form.invalid || this.isSubmitting) return;
+    if (this.form.invalid || this.isSubmitting || this.isResetSubmitting) return;
 
     this.isSubmitting = true;
     this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
-     next: () => {
-  this.zone.run(async () => {
-    this.blurActiveElement();
+      next: () => {
+        this.zone.run(async () => {
+          this.blurActiveElement();
 
-    try {
-      await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
-    } finally {
-      this.isSubmitting = false;
-    }
-  });
-},
+          try {
+            await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+          } finally {
+            this.isSubmitting = false;
+          }
+        });
+      },
       error: e => {
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
@@ -204,22 +218,23 @@ export class LoginPage implements OnInit {
   }
 
   continueWithGoogle() {
-    if (this.isSubmitting || this.isGoogleSubmitting) return;
+    if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) return;
 
     this.error = '';
+    this.resetMessage = '';
     this.isGoogleSubmitting = true;
     this.blurActiveElement();
 
     this.auth.loginWithGoogle().subscribe({
       next: () => {
-  this.zone.run(async () => {
-    try {
-      await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
-    } finally {
-      this.isGoogleSubmitting = false;
-    }
-  });
-},
+        this.zone.run(async () => {
+          try {
+            await this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+          } finally {
+            this.isGoogleSubmitting = false;
+          }
+        });
+      },
       error: e => {
         sessionStorage.removeItem('googleAuthRedirectPending');
 
@@ -231,10 +246,34 @@ export class LoginPage implements OnInit {
     });
   }
 
+  sendPasswordReset() {
+    this.error = '';
+    this.resetMessage = '';
+    this.form.controls.email.markAsTouched();
+
+    if (this.form.controls.email.invalid || this.isResetSubmitting) return;
+
+    this.isResetSubmitting = true;
+    this.auth.sendPasswordResetEmail(this.form.value.email!).subscribe({
+      next: () => {
+        this.zone.run(() => {
+          this.resetMessage = 'Password reset email sent. Check your inbox for next steps.';
+          this.isResetSubmitting = false;
+        });
+      },
+      error: e => {
+        this.zone.run(() => {
+          this.error = getAuthErrorMessage(e);
+          this.isResetSubmitting = false;
+        });
+      },
+    });
+  }
+
   navigateToSignup() {
-  this.blurActiveElement();
-  void this.router.navigateByUrl('/signup', { replaceUrl: false });
-}
+    this.blurActiveElement();
+    void this.router.navigateByUrl('/signup', { replaceUrl: false });
+  }
 
   private blurActiveElement() {
     this.focus.clearActiveElement();

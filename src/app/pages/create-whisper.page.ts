@@ -52,6 +52,18 @@ import { WhisperService } from '../services/whisper.service';
 
     <ion-content>
       <main class="page-shell">
+        <section class="hero-copy">
+          <p class="eyebrow">Step 1 of 3</p>
+          <h1>Shape the WhisperWrap.</h1>
+          <p class="muted">Provide enough context for a thoughtful draft while keeping recipient consent at the center.</p>
+        </section>
+
+        <ol class="progress-steps" aria-label="WhisperWrap progress">
+          <li class="active">Create</li>
+          <li>Review</li>
+          <li>Send</li>
+        </ol>
+
         <ion-card class="form-card">
           <ion-card-content>
             <form [formGroup]="form" novalidate>
@@ -72,19 +84,19 @@ import { WhisperService } from '../services/whisper.service';
 
               <ion-item>
                 <ion-select label="Whisper type" labelPlacement="stacked" formControlName="whisperType">
-                  <ion-select-option *ngFor="let type of types" [value]="type">{{ type }}</ion-select-option>
+                  <ion-select-option *ngFor="let type of types" [value]="type">{{ formatOption(type) }}</ion-select-option>
                 </ion-select>
               </ion-item>
 
               <ion-item>
                 <ion-select label="Wrap style" labelPlacement="stacked" formControlName="wrapStyle">
-                  <ion-select-option *ngFor="let style of styles" [value]="style">{{ style }}</ion-select-option>
+                  <ion-select-option *ngFor="let style of styles" [value]="style">{{ formatOption(style) }}</ion-select-option>
                 </ion-select>
               </ion-item>
 
               <ion-item>
                 <ion-select label="Delivery format" labelPlacement="stacked" formControlName="deliveryFormat">
-                  <ion-select-option *ngFor="let format of formats" [value]="format">{{ format }}</ion-select-option>
+                  <ion-select-option *ngFor="let format of formats" [value]="format">{{ formatOption(format) }}</ion-select-option>
                 </ion-select>
               </ion-item>
 
@@ -156,6 +168,10 @@ export class CreateWhisperPage {
     deliveryFormat: ['text' as DeliveryFormat, Validators.required],
     senderIntent: ['', [Validators.required, Validators.minLength(20)]],
   });
+
+  formatOption(value: string): string {
+    return value.replace('_', ' + ');
+  }
 
   messageFor(controlName: keyof typeof this.form.controls): string {
     const control = this.form.controls[controlName];
