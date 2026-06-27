@@ -9,6 +9,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
+  sendPasswordResetEmail,
   getRedirectResult,
   GoogleAuthProvider,
   getAdditionalUserInfo,
@@ -34,6 +35,10 @@ export class AuthService {
 
   login(email: string, password: string) {
     return from(signInWithEmailAndPassword(this.auth, email.trim(), password));
+  }
+
+  sendPasswordResetEmail(email: string) {
+    return from(sendPasswordResetEmail(this.auth, email.trim()));
   }
 
   loginWithGoogle() {

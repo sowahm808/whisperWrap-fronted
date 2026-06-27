@@ -80,9 +80,20 @@ import { FocusService } from '../services/focus.service';
               </ion-item>
               <ion-text class="error-text" *ngIf="passwordMessage">{{ passwordMessage }}</ion-text>
               <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
+              <ion-text class="success-text" *ngIf="resetMessage">{{ resetMessage }}</ion-text>
 
-              <ion-button expand="block" type="submit" [disabled]="isSubmitting || isGoogleSubmitting">
+              <ion-button expand="block" type="submit" [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting">
                 {{ isSubmitting ? 'Logging in...' : 'Login' }}
+              </ion-button>
+
+              <ion-button
+                expand="block"
+                fill="clear"
+                type="button"
+                [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting"
+                (click)="sendPasswordReset()"
+              >
+                {{ isResetSubmitting ? 'Sending reset email...' : 'Forgot password?' }}
               </ion-button>
 
               <div class="auth-divider" aria-hidden="true"><span>or</span></div>
@@ -92,7 +103,7 @@ import { FocusService } from '../services/focus.service';
                 expand="block"
                 fill="outline"
                 type="button"
-                [disabled]="isSubmitting || isGoogleSubmitting"
+                [disabled]="isSubmitting || isGoogleSubmitting || isResetSubmitting"
                 (click)="continueWithGoogle()"
               >
                 <span class="google-mark" aria-hidden="true">G</span>
@@ -112,6 +123,8 @@ export class LoginPage implements OnInit {
   error = '';
   isSubmitting = false;
   isGoogleSubmitting = false;
+  isResetSubmitting = false;
+  resetMessage = '';
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -177,9 +190,10 @@ export class LoginPage implements OnInit {
 
   submit() {
     this.error = '';
+    this.resetMessage = '';
     this.form.markAllAsTouched();
 
-    if (this.form.invalid || this.isSubmitting) return;
+    if (this.form.invalid || this.isSubmitting || this.isResetSubmitting) return;
 
     this.isSubmitting = true;
     this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
@@ -204,9 +218,10 @@ export class LoginPage implements OnInit {
   }
 
   continueWithGoogle() {
-    if (this.isSubmitting || this.isGoogleSubmitting) return;
+    if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) return;
 
     this.error = '';
+    this.resetMessage = '';
     this.isGoogleSubmitting = true;
     this.blurActiveElement();
 
@@ -226,6 +241,30 @@ export class LoginPage implements OnInit {
         this.zone.run(() => {
           this.error = getAuthErrorMessage(e);
           this.isGoogleSubmitting = false;
+        });
+      },
+    });
+  }
+
+  sendPasswordReset() {
+    this.error = '';
+    this.resetMessage = '';
+    this.form.controls.email.markAsTouched();
+
+    if (this.form.controls.email.invalid || this.isResetSubmitting) return;
+
+    this.isResetSubmitting = true;
+    this.auth.sendPasswordResetEmail(this.form.value.email!).subscribe({
+      next: () => {
+        this.zone.run(() => {
+          this.resetMessage = 'Password reset email sent. Check your inbox for next steps.';
+          this.isResetSubmitting = false;
+        });
+      },
+      error: e => {
+        this.zone.run(() => {
+          this.error = getAuthErrorMessage(e);
+          this.isResetSubmitting = false;
         });
       },
     });
