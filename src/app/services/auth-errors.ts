@@ -19,7 +19,17 @@ function isAuthErrorLike(error: unknown): error is AuthErrorLike {
   return typeof error === 'object' && error !== null;
 }
 
+function getUnauthorizedDomainMessage() {
+  const currentHost = window.location.hostname;
+
+  return `This domain (${currentHost}) is not authorized for Google sign-in. Add it in Firebase Console > Authentication > Settings > Authorized domains, then try again.`;
+}
+
 export function getAuthErrorMessage(error: unknown) {
+  if (isAuthErrorLike(error) && error.code === 'auth/unauthorized-domain') {
+    return getUnauthorizedDomainMessage();
+  }
+
   if (isAuthErrorLike(error) && error.code && AUTH_ERROR_MESSAGES[error.code]) {
     return AUTH_ERROR_MESSAGES[error.code];
   }
