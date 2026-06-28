@@ -320,16 +320,27 @@ export class LoginPage implements OnInit {
     });
   }
 
-  navigateToSignup() {
-    if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) {
-      return;
-    }
-
-    this.blurActiveElement();
-    void this.router.navigateByUrl('/signup', { replaceUrl: false });
+  async navigateToSignup() {
+  if (this.isSubmitting || this.isGoogleSubmitting || this.isResetSubmitting) {
+    return;
   }
+
+  this.blurActiveElement();
+
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  await this.zone.run(() =>
+    this.router.navigateByUrl('/signup', { replaceUrl: false }),
+  );
+}
 
   private blurActiveElement() {
-    this.focus.clearActiveElement();
+  this.focus.clearActiveElement();
+
+  const activeElement = document.activeElement as HTMLElement | null;
+
+  if (activeElement && typeof activeElement.blur === 'function') {
+    activeElement.blur();
   }
+}
 }
