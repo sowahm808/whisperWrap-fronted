@@ -1,5 +1,4 @@
 import 'zone.js';
-import { ErrorHandler } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withEnabledBlockingInitialNavigation } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -14,11 +13,9 @@ import { appRoutes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
 import { authInterceptor } from './app/services/auth.interceptor';
-import { AppErrorHandler } from './app/services/app-error-handler.service';
 
 bootstrapApplication(AppComponent, {
   providers: [
-    { provide: ErrorHandler, useClass: AppErrorHandler },
 
     provideIonicAngular(),
 
