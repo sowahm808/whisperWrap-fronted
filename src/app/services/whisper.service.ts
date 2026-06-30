@@ -1,9 +1,10 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Firestore, addDoc, collection, doc, serverTimestamp, updateDoc } from '@angular/fire/firestore';
 import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 import { ConsentResponse, GeneratedWhisper, WhisperInput, WhisperRecord } from './models';
 
 const DRAFT_KEY = 'whisperwrap:draft';
@@ -11,6 +12,7 @@ const DRAFT_KEY = 'whisperwrap:draft';
 @Injectable({ providedIn: 'root' })
 export class WhisperService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
   private db = inject(Firestore);
   private storage = inject(Storage);
   private base = `${environment.backendUrl}/api/whispers`;
@@ -18,13 +20,17 @@ export class WhisperService {
   draft?: WhisperRecord = this.restoreDraft();
 
   generate(payload: WhisperInput) {
-    return this.http.post<GeneratedWhisper>(`${this.base}/generate`, payload).pipe(catchError(error => this.handleError(error)));
+    return this.withAuthHeaders().pipe(
+      switchMap(headers => this.http.post<GeneratedWhisper>(`${this.base}/generate`, payload, { headers })),
+      catchError(error => this.handleError(error)),
+    );
   }
 
   sendConsent(payload: WhisperRecord & { senderName: string }) {
-    return this.http
-      .post<ConsentResponse>(`${this.base}/send-consent`, payload)
-      .pipe(catchError(error => this.handleError(error)));
+    return this.withAuthHeaders(true).pipe(
+      switchMap(headers => this.http.post<ConsentResponse>(`${this.base}/send-consent`, payload, { headers })),
+      catchError(error => this.handleError(error)),
+    );
   }
 
   getUnwrap(token: string) {
@@ -78,6 +84,18 @@ export class WhisperService {
     return getDownloadURL(audioRef);
   }
 
+  private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
+    return from(this.auth.token(forceRefresh)).pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('Please log in again before sending a WhisperWrap.'));
+        }
+
+        return from([new HttpHeaders({ Authorization: `Bearer ${token}` })]);
+      }),
+    );
+  }
+
   private restoreDraft() {
     try {
       const saved = sessionStorage.getItem(DRAFT_KEY);
@@ -97,7 +115,7 @@ export class WhisperService {
       }
 
       if (error.status === 401) {
-        return throwError(() => new Error('Please log in again before generating a WhisperWrap.'));
+        return throwError(() => new Error('Your login session expired. Please log in again before sending a WhisperWrap.'));
       }
 
       if (error.status === 403) {
@@ -105,6 +123,10 @@ export class WhisperService {
       }
 
       return throwError(() => new Error('WhisperWrap service is unavailable. Please try again.'));
+    }
+
+    if (error instanceof Error) {
+      return throwError(() => error);
     }
 
     return throwError(() => new Error('Something went wrong. Please try again.'));
