@@ -76,6 +76,15 @@ export const environment = {
 };
 ```
 
+
+### Google Sign-in Authorized Domains
+
+Firebase only allows Google sign-in from domains listed in Firebase Console. If Google login shows `Firebase: Error (auth/unauthorized-domain)`, add the exact host you are using (for example `localhost`, your Vercel/Netlify preview host, or your production domain) in:
+
+Firebase Console > Authentication > Settings > Authorized domains
+
+After adding the domain, retry Google sign-in from that same host.
+
 The backend should be configured with:
 
 - `OPENAI_API_KEY`
