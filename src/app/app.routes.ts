@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
-import { authMatchGuard } from './guards/auth.guards';
+import { authGuard } from './guards/auth.guards';
 
 export const appRoutes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
     pathMatch: 'full',
+    redirectTo: 'login',
   },
 
   {
@@ -22,28 +22,28 @@ export const appRoutes: Routes = [
 
   {
     path: 'dashboard',
-    canMatch: [authMatchGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/dashboard.page').then(m => m.DashboardPage),
   },
 
   {
     path: 'create-whisper',
-    canMatch: [authMatchGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/create-whisper.page').then(m => m.CreateWhisperPage),
   },
 
   {
     path: 'review-whisper',
-    canMatch: [authMatchGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/review-whisper.page').then(m => m.ReviewWhisperPage),
   },
 
   {
     path: 'whisper-sent',
-    canMatch: [authMatchGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/whisper-sent.page').then(m => m.WhisperSentPage),
   },
@@ -52,5 +52,10 @@ export const appRoutes: Routes = [
     path: 'unwrap/:token',
     loadComponent: () =>
       import('./pages/unwrap-whisper.page').then(m => m.UnwrapWhisperPage),
+  },
+
+  {
+    path: '**',
+    redirectTo: 'dashboard',
   },
 ];
