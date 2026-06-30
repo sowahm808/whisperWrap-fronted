@@ -156,12 +156,12 @@ resetPassword(email: string) {
     });
   }
 
-  async token() {
+  async token(forceRefresh = false) {
     const user = await this.waitForUser();
 
     if (!user) return '';
 
-    return user.getIdToken();
+    return user.getIdToken(forceRefresh);
   }
 
   private createGoogleProvider() {
