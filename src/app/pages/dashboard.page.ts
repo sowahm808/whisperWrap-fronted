@@ -1,6 +1,6 @@
-import { NgClass, NgFor, NgIf,TitleCasePipe } from '@angular/common';
+import { NgClass, NgFor, NgIf, TitleCasePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router} from '@angular/router';
+import { Router } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -23,15 +23,16 @@ import {
 } from '@ionic/angular/standalone';
 
 import { AuthService } from '../services/auth.service';
-import { UserProfile, WhisperRecord } from '../services/models';
 import { FocusService } from '../services/focus.service';
-import { NavController } from '@ionic/angular/standalone';
+import { UserProfile, WhisperRecord } from '../services/models';
+
 @Component({
   standalone: true,
   imports: [
     NgClass,
     NgFor,
     NgIf,
+    TitleCasePipe,
     IonContent,
     IonHeader,
     IonTitle,
@@ -40,7 +41,6 @@ import { NavController } from '@ionic/angular/standalone';
     IonCard,
     IonCardContent,
     IonText,
-    TitleCasePipe
   ],
   template: `
     <ion-header>
@@ -78,22 +78,22 @@ import { NavController } from '@ionic/angular/standalone';
               </div>
             </div>
 
-            <!-- <ion-button
+            <ion-button
               expand="block"
-              routerLink="/create-whisper"
-              [disabled]="isLoading"
+              type="button"
+              [disabled]="isLoading || isNavigating"
+              (click)="openCreateWhisper()"
             >
-              Create WhisperWrap
-            </ion-button> -->
-                <ion-button
-                expand="block"
-                type="button"
-                [disabled]="isLoading"
-                (click)="openCreateWhisper()"
-              >
-                Create WhisperWrap
-              </ion-button>
-            <ion-button fill="clear" expand="block" (click)="logout()" [disabled]="isLoggingOut">
+              {{ isNavigating ? 'Opening...' : 'Create WhisperWrap' }}
+            </ion-button>
+
+            <ion-button
+              fill="clear"
+              expand="block"
+              type="button"
+              (click)="logout()"
+              [disabled]="isLoggingOut || isNavigating"
+            >
               {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
             </ion-button>
 
@@ -112,6 +112,11 @@ import { NavController } from '@ionic/angular/standalone';
               </div>
             </div>
 
+            <div class="empty-state" *ngIf="isLoading">
+              <strong>Loading...</strong>
+              <p class="muted">Preparing your dashboard.</p>
+            </div>
+
             <div class="empty-state" *ngIf="!isLoading && !recentWhispers.length">
               <strong>No WhisperWraps yet</strong>
               <p class="muted">
@@ -119,15 +124,12 @@ import { NavController } from '@ionic/angular/standalone';
               </p>
             </div>
 
-            <div class="empty-state" *ngIf="isLoading">
-              <strong>Loading...</strong>
-              <p class="muted">Preparing your dashboard.</p>
-            </div>
-
             <div class="whisper-row" *ngFor="let whisper of recentWhispers">
               <div>
                 <strong>{{ whisper.title || whisper.recipientName }}</strong>
-                <p>{{ whisper.recipientName }} • {{ formatDelivery(whisper.deliveryFormat) }}</p>
+                <p>
+                  {{ whisper.recipientName }} • {{ formatDelivery(whisper.deliveryFormat) }}
+                </p>
               </div>
 
               <span class="status-pill">{{ formatStatus(whisper.status) }}</span>
@@ -145,6 +147,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   isLoading = true;
   isLoggingOut = false;
+  isNavigating = false;
   errorMessage = '';
 
   private profileSub?: Subscription;
@@ -155,8 +158,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     private db: Firestore,
     private router: Router,
     private focus: FocusService,
-    private nav: NavController,
-
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -216,9 +217,25 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.stopDashboardSubscriptions();
   }
 
+  async openCreateWhisper(): Promise<void> {
+    if (this.isNavigating) return;
+
+    this.errorMessage = '';
+    this.isNavigating = true;
+    this.focus.clearActiveElement();
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await this.router.navigateByUrl('/create-whisper');
+    } catch (error) {
+      console.error('[Dashboard navigation]', error);
+      this.errorMessage = 'Could not open Create WhisperWrap.';
+      this.isNavigating = false;
+    }
+  }
+
   formatDelivery(format?: string): string {
-    if (!format) return 'Not selected';
-    return format.replace('_', ' + ');
+    return format ? format.replace(/_/g, ' + ') : 'Not selected';
   }
 
   formatStatus(status?: string): string {
@@ -229,29 +246,13 @@ export class DashboardPage implements OnInit, OnDestroy {
       .replace(/\b\w/g, char => char.toUpperCase());
   }
 
-//   openCreateWhisper(): void {
-//   this.errorMessage = '';
-//   this.focus.clearActiveElement();
-
-//   setTimeout(() => {
-//     void this.router.navigateByUrl('/create-whisper');
-//   }, 50);
-// }
-
-openCreateWhisper(): void {
-  this.errorMessage = '';
-  this.focus.clearActiveElement();
-
-  setTimeout(() => {
-    void this.nav.navigateForward('/create-whisper');
-  }, 50);
-}
   logout(): void {
     if (this.isLoggingOut) return;
 
     this.isLoggingOut = true;
     this.errorMessage = '';
     this.stopDashboardSubscriptions();
+    this.focus.clearActiveElement();
 
     this.auth.logout().subscribe({
       next: () => {
