@@ -69,34 +69,46 @@ sendConsent(whisperId: string) {
     this.draft = undefined;
     sessionStorage.removeItem(DRAFT_KEY);
   }
+// async saveDraftToFirestore(draft: WhisperRecord) {
+//   const payload = {
+//     ...draft,
+//     generatedContent: {
+//       title: draft.title,
+//       message: draft.message,
+//       scriptureReference: draft.scriptureReference,
+//       scriptureText: draft.scriptureText,
+//       shortPrayer: draft.shortPrayer,
+//     },
+//     status: draft.status,
+//     updatedAt: serverTimestamp(),
+//     createdAt: draft.createdAt ?? serverTimestamp(),
+//   };
 
-  // async saveDraftToFirestore(draft: WhisperRecord) {
-  //   const payload = {
-  //     ...draft,
-  //     status: draft.status,
-  //     updatedAt: serverTimestamp(),
-  //     createdAt: draft.createdAt ?? serverTimestamp(),
-  //   };
+//   if (draft.id) {
+//     await updateDoc(doc(this.db, 'whispers', draft.id), payload);
+//     return draft.id;
+//   }
 
-  //   if (draft.id) {
-  //     await updateDoc(doc(this.db, 'whispers', draft.id), payload);
-  //     return draft.id;
-  //   }
-
-  //   const created = await addDoc(collection(this.db, 'whispers'), payload);
-  //   this.setDraft({ ...draft, id: created.id });
-  //   return created.id;
-  // }
+//   const created = await addDoc(collection(this.db, 'whispers'), payload);
+//   this.setDraft({ ...draft, id: created.id });
+//   return created.id;
+// }
 async saveDraftToFirestore(draft: WhisperRecord) {
+  const generatedContent = {
+    title: draft.title,
+    message: draft.message,
+    scriptureReference: draft.scriptureReference,
+    scriptureText: draft.scriptureText,
+    shortPrayer: draft.shortPrayer,
+  };
+
   const payload = {
     ...draft,
-    generatedContent: {
-      title: draft.title,
-      message: draft.message,
-      scriptureReference: draft.scriptureReference,
-      scriptureText: draft.scriptureText,
-      shortPrayer: draft.shortPrayer,
-    },
+    generatedContent,
+
+    // backend expects this
+    audioPath: draft.audioPath ?? draft.audioUrl ?? null,
+
     status: draft.status,
     updatedAt: serverTimestamp(),
     createdAt: draft.createdAt ?? serverTimestamp(),
@@ -111,6 +123,7 @@ async saveDraftToFirestore(draft: WhisperRecord) {
   this.setDraft({ ...draft, id: created.id });
   return created.id;
 }
+
   async uploadAudio(file: File, userId: string) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
     const audioRef = ref(this.storage, `whispers/${userId}/audio/${Date.now()}-${safeName}`);
