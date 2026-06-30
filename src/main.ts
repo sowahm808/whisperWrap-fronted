@@ -1,23 +1,37 @@
-import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { Auth } from '@angular/fire/auth';
-import { from, switchMap } from 'rxjs';
+import 'zone.js';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter, withEnabledBlockingInitialNavigation } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideIonicAngular } from '@ionic/angular/standalone';
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideAuth, getAuth } from '@angular/fire/auth';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideStorage, getStorage } from '@angular/fire/storage';
+import { provideAnalytics, getAnalytics } from '@angular/fire/analytics';
 
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth = inject(Auth);
+import { appRoutes } from './app/app.routes';
+import { AppComponent } from './app/app.component';
+import { environment } from './environments/environment';
+import { authInterceptor } from './app/services/auth.interceptor';
 
-  return from(auth.authStateReady().then(() => auth.currentUser)).pipe(
-    switchMap(async user => {
-      if (!user) return req;
+bootstrapApplication(AppComponent, {
+  providers: [
 
-      const token = await user.getIdToken();
+    provideIonicAngular(),
 
-      return req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    }),
-    switchMap(authReq => next(authReq)),
-  );
-};
+    provideRouter(
+      appRoutes,
+      withEnabledBlockingInitialNavigation(),
+    ),
+
+    provideHttpClient(withInterceptors([authInterceptor])),
+
+    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideAuth(() => getAuth()),
+    provideFirestore(() => getFirestore()),
+    provideStorage(() => getStorage()),
+    provideAnalytics(() => getAnalytics()),
+  ],
+}).catch((error: unknown) => {
+  console.error('[WhisperWrap bootstrap]', error);
+});
