@@ -20,8 +20,7 @@ bootstrapApplication(AppComponent, {
     provideIonicAngular(),
 
     provideRouter(
-      appRoutes,
-      withEnabledBlockingInitialNavigation(),
+      appRoutes
     ),
 
     provideHttpClient(withInterceptors([authInterceptor])),
