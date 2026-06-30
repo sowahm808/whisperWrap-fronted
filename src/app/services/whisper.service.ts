@@ -95,18 +95,36 @@ sendConsent(whisperId: string) {
     return getDownloadURL(audioRef);
   }
 
-  private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
-    return from(this.auth.token(forceRefresh)).pipe(
-      switchMap(token => {
-        if (!token) {
-          return throwError(() => new Error('Please log in again before sending a WhisperWrap.'));
-        }
+  // private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
+  //   return from(this.auth.token(forceRefresh)).pipe(
+  //     switchMap(token => {
+  //       if (!token) {
+  //         return throwError(() => new Error('Please log in again before sending a WhisperWrap.'));
+  //       }
 
-        return from([new HttpHeaders({ Authorization: `Bearer ${token}` })]);
-      }),
-    );
-  }
+  //       return from([new HttpHeaders({ Authorization: `Bearer ${token}` })]);
+  //     }),
+  //   );
+  // }
+private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
+  return from(this.auth.waitForUser()).pipe(
+    switchMap(user => {
+      if (!user) {
+        return throwError(() => new Error('Please log in again before sending a WhisperWrap.'));
+      }
 
+      return from(user.getIdToken(forceRefresh));
+    }),
+    switchMap(token =>
+      from([
+        new HttpHeaders({
+          Authorization: `Bearer ${token}`,
+          'X-Firebase-ID-Token': token,
+        }),
+      ]),
+    ),
+  );
+}
   private restoreDraft() {
     try {
       const saved = sessionStorage.getItem(DRAFT_KEY);
