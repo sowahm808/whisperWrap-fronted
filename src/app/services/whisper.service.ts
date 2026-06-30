@@ -26,13 +26,24 @@ export class WhisperService {
     );
   }
 
-  sendConsent(payload: WhisperRecord & { senderName: string }) {
-    return this.withAuthHeaders(true).pipe(
-      switchMap(headers => this.http.post<ConsentResponse>(`${this.base}/send-consent`, payload, { headers })),
-      catchError(error => this.handleError(error)),
-    );
-  }
-
+  // sendConsent(payload: WhisperRecord & { senderName: string }) {
+  //   return this.withAuthHeaders(true).pipe(
+  //     switchMap(headers => this.http.post<ConsentResponse>(`${this.base}/send-consent`, payload, { headers })),
+  //     catchError(error => this.handleError(error)),
+  //   );
+  // }
+sendConsent(whisperId: string) {
+  return this.withAuthHeaders(true).pipe(
+    switchMap(headers =>
+      this.http.post<ConsentResponse>(
+        `${this.base}/send-consent`,
+        { whisperId },
+        { headers },
+      ),
+    ),
+    catchError(error => this.handleError(error)),
+  );
+}
   getUnwrap(token: string) {
     return this.http.get<WhisperRecord>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(catchError(error => this.handleError(error)));
   }
