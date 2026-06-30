@@ -211,8 +211,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.profileSub?.unsubscribe();
-    this.unsubscribeWhispers?.();
+    this.stopDashboardSubscriptions();
   }
 
   formatDelivery(format?: string): string {
@@ -242,6 +241,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
     this.isLoggingOut = true;
     this.errorMessage = '';
+    this.stopDashboardSubscriptions();
 
     this.auth.logout().subscribe({
       next: () => {
@@ -253,5 +253,13 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.isLoggingOut = false;
       },
     });
+  }
+
+  private stopDashboardSubscriptions(): void {
+    this.profileSub?.unsubscribe();
+    this.profileSub = undefined;
+
+    this.unsubscribeWhispers?.();
+    this.unsubscribeWhispers = undefined;
   }
 }
