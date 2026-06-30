@@ -25,6 +25,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { UserProfile, WhisperRecord } from '../services/models';
 import { FocusService } from '../services/focus.service';
+import { NavController } from '@ionic/angular/standalone';
 @Component({
   standalone: true,
   imports: [
@@ -85,13 +86,13 @@ import { FocusService } from '../services/focus.service';
               Create WhisperWrap
             </ion-button> -->
                 <ion-button
-                  expand="block"
-                  type="button"
-                  [disabled]="isLoading"
-                  (click)="openCreateWhisper()"
-                >
-                  Create WhisperWrap
-                </ion-button>
+                expand="block"
+                type="button"
+                [disabled]="isLoading"
+                (click)="openCreateWhisper()"
+              >
+                Create WhisperWrap
+              </ion-button>
             <ion-button fill="clear" expand="block" (click)="logout()" [disabled]="isLoggingOut">
               {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
             </ion-button>
@@ -154,6 +155,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     private db: Firestore,
     private router: Router,
     private focus: FocusService,
+    private nav: NavController,
 
   ) {}
 
@@ -228,15 +230,23 @@ export class DashboardPage implements OnInit, OnDestroy {
       .replace(/\b\w/g, char => char.toUpperCase());
   }
 
-  openCreateWhisper(): void {
+//   openCreateWhisper(): void {
+//   this.errorMessage = '';
+//   this.focus.clearActiveElement();
+
+//   setTimeout(() => {
+//     void this.router.navigateByUrl('/create-whisper');
+//   }, 50);
+// }
+
+openCreateWhisper(): void {
   this.errorMessage = '';
   this.focus.clearActiveElement();
 
   setTimeout(() => {
-    void this.router.navigateByUrl('/create-whisper');
+    void this.nav.navigateForward('/create-whisper');
   }, 50);
 }
-
   logout(): void {
     if (this.isLoggingOut) return;
 
