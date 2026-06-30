@@ -1,6 +1,6 @@
 import { NgClass, NgFor, NgIf,TitleCasePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router} from '@angular/router';
 import {
   Firestore,
   collection,
@@ -24,14 +24,13 @@ import {
 
 import { AuthService } from '../services/auth.service';
 import { UserProfile, WhisperRecord } from '../services/models';
-
+import { FocusService } from '../services/focus.service';
 @Component({
   standalone: true,
   imports: [
     NgClass,
     NgFor,
     NgIf,
-    RouterLink,
     IonContent,
     IonHeader,
     IonTitle,
@@ -78,14 +77,21 @@ import { UserProfile, WhisperRecord } from '../services/models';
               </div>
             </div>
 
-            <ion-button
+            <!-- <ion-button
               expand="block"
               routerLink="/create-whisper"
               [disabled]="isLoading"
             >
               Create WhisperWrap
-            </ion-button>
-
+            </ion-button> -->
+                <ion-button
+                  expand="block"
+                  type="button"
+                  [disabled]="isLoading"
+                  (click)="openCreateWhisper()"
+                >
+                  Create WhisperWrap
+                </ion-button>
             <ion-button fill="clear" expand="block" (click)="logout()" [disabled]="isLoggingOut">
               {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
             </ion-button>
@@ -147,6 +153,8 @@ export class DashboardPage implements OnInit, OnDestroy {
     private auth: AuthService,
     private db: Firestore,
     private router: Router,
+    private focus: FocusService,
+
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -219,6 +227,15 @@ export class DashboardPage implements OnInit, OnDestroy {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, char => char.toUpperCase());
   }
+
+  openCreateWhisper(): void {
+  this.errorMessage = '';
+  this.focus.clearActiveElement();
+
+  setTimeout(() => {
+    void this.router.navigateByUrl('/create-whisper');
+  }, 50);
+}
 
   logout(): void {
     if (this.isLoggingOut) return;
