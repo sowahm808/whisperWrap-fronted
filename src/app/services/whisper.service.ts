@@ -2,11 +2,10 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Injectable, inject } from '@angular/core';
 import { Firestore, addDoc, collection, doc, serverTimestamp, updateDoc } from '@angular/fire/firestore';
 import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage';
-import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { ConsentResponse, GeneratedWhisper, WhisperInput, WhisperRecord } from './models';
-
 const DRAFT_KEY = 'whisperwrap:draft';
 
 @Injectable({ providedIn: 'root' })
@@ -44,15 +43,41 @@ sendConsent(whisperId: string) {
     catchError(error => this.handleError(error)),
   );
 }
-  getUnwrap(token: string) {
-    return this.http.get<WhisperRecord>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(catchError(error => this.handleError(error)));
-  }
+  // getUnwrap(token: string) {
+  //   return this.http.get<WhisperRecord>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(catchError(error => this.handleError(error)));
+  // }
 
-  acceptUnwrap(token: string) {
-    return this.http
-      .post<WhisperRecord>(`${this.base}/unwrap/${encodeURIComponent(token)}/accept`, {})
-      .pipe(catchError(error => this.handleError(error)));
-  }
+getUnwrap(token: string) {
+  return this.http.get<any>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(
+    map(response => ({
+      ...response,
+      ...response.generatedContent,
+      audioUrl: response.audioUrl ?? null,
+      status: response.status ?? 'opened',
+    }) as WhisperRecord),
+    catchError(error => this.handleError(error)),
+  );
+}
+
+  // acceptUnwrap(token: string) {
+  //   return this.http
+  //     .post<WhisperRecord>(`${this.base}/unwrap/${encodeURIComponent(token)}/accept`, {})
+  //     .pipe(catchError(error => this.handleError(error)));
+  // }
+
+acceptUnwrap(token: string) {
+  return this.http
+    .post<any>(`${this.base}/unwrap/${encodeURIComponent(token)}/accept`, {})
+    .pipe(
+      map(response => ({
+        ...response,
+        ...response.generatedContent,
+        audioUrl: response.audioUrl ?? null,
+        status: response.status ?? 'accepted',
+      }) as WhisperRecord),
+      catchError(error => this.handleError(error)),
+    );
+}
 
   markListened(token: string) {
     return this.http
