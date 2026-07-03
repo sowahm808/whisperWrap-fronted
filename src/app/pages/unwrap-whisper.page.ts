@@ -56,7 +56,7 @@ import { WhisperService } from '../services/whisper.service';
                     <div class="box"></div>
                   </div>
 
-                  <h1>Opening your WhisperWrap...</h1>
+                  <h1>Opening your Whisper...</h1>
                   <p>A private message is being unwrapped for you.</p>
                 </section>
 
@@ -72,7 +72,7 @@ import { WhisperService } from '../services/whisper.service';
                 </section>
 
                 <section *ngIf="accepted && !showUnwrapAnimation" class="message-panel">
-                  <p class="eyebrow">Unwrapped your whisper</p>
+                  <p class="eyebrow">Unwrap your whisper</p>
                   <h1>{{ data.title }}</h1>
 
                   <p class="message-text">{{ data.message }}</p>
