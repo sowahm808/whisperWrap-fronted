@@ -43,11 +43,12 @@ import { WhisperService } from '../services/whisper.service';
 
                 <section *ngIf="showUnwrapAnimation" class="unwrap-stage">
                   <div class="gift">
+                    <div class="glow"></div>
                     <div class="lid"></div>
                     <div class="bow"></div>
                     <div class="box"></div>
-                    <div class="glow"></div>
                   </div>
+
                   <h1>Opening your WhisperWrap...</h1>
                   <p>A private message is being unwrapped for you.</p>
                 </section>
@@ -137,6 +138,7 @@ import { WhisperService } from '../services/whisper.service';
       background: linear-gradient(135deg, #7c3aed, #c026d3);
       border-radius: 12px;
       box-shadow: 0 18px 40px rgba(124, 58, 237, 0.35);
+      z-index: 2;
     }
 
     .box::before {
@@ -169,7 +171,7 @@ import { WhisperService } from '../services/whisper.service';
       border-radius: 10px;
       transform-origin: bottom left;
       animation: openLid 1.4s ease-in-out forwards;
-      z-index: 3;
+      z-index: 4;
     }
 
     .bow {
@@ -178,7 +180,7 @@ import { WhisperService } from '../services/whisper.service';
       left: 55px;
       width: 60px;
       height: 42px;
-      z-index: 4;
+      z-index: 5;
       animation: bowPop 1.2s ease-in-out forwards;
     }
 
@@ -228,9 +230,11 @@ import { WhisperService } from '../services/whisper.service';
       0% {
         transform: rotate(0) translateY(0);
       }
+
       45% {
         transform: rotate(-12deg) translateY(-18px);
       }
+
       100% {
         transform: rotate(-28deg) translate(-22px, -70px);
       }
@@ -240,6 +244,7 @@ import { WhisperService } from '../services/whisper.service';
       0% {
         transform: scale(1);
       }
+
       100% {
         transform: scale(1.08) translateY(-65px) rotate(-10deg);
       }
@@ -250,9 +255,11 @@ import { WhisperService } from '../services/whisper.service';
         opacity: 0;
         transform: scale(0.5);
       }
+
       55% {
         opacity: 1;
       }
+
       100% {
         opacity: 0;
         transform: scale(1.8) translateY(-35px);
@@ -264,6 +271,7 @@ import { WhisperService } from '../services/whisper.service';
         opacity: 0;
         transform: translateY(8px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -273,6 +281,7 @@ import { WhisperService } from '../services/whisper.service';
 })
 export class UnwrapWhisperPage {
   data?: WhisperRecord;
+
   accepted = false;
   isLoading = true;
   isAccepting = false;
@@ -295,12 +304,30 @@ export class UnwrapWhisperPage {
       next: data => {
         this.data = data;
 
-        this.accepted =
+        const alreadyAccepted =
           data.status === 'accepted' ||
           data.status === 'opened' ||
           data.status === 'listened';
 
+        const animationKey = `whisperwrap:unwrap-animation:${this.token}`;
+        const hasPlayedAnimation = sessionStorage.getItem(animationKey) === 'true';
+
         this.isLoading = false;
+
+        if (alreadyAccepted && !hasPlayedAnimation) {
+          this.accepted = false;
+          this.showUnwrapAnimation = true;
+          sessionStorage.setItem(animationKey, 'true');
+
+          setTimeout(() => {
+            this.showUnwrapAnimation = false;
+            this.accepted = true;
+          }, 1800);
+
+          return;
+        }
+
+        this.accepted = alreadyAccepted;
       },
       error: e => {
         this.error = e.message;
@@ -318,8 +345,13 @@ export class UnwrapWhisperPage {
     this.service.acceptUnwrap(this.token).subscribe({
       next: data => {
         this.data = { ...(this.data ?? data), ...data };
+
         this.isAccepting = false;
+        this.accepted = false;
         this.showUnwrapAnimation = true;
+
+        const animationKey = `whisperwrap:unwrap-animation:${this.token}`;
+        sessionStorage.setItem(animationKey, 'true');
 
         setTimeout(() => {
           this.showUnwrapAnimation = false;
