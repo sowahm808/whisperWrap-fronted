@@ -30,7 +30,7 @@ import { WhisperService } from '../services/whisper.service';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Unwrap WhisperWrap</ion-title>
+        <ion-title>Unwrap Your Whisper</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -62,8 +62,8 @@ import { WhisperService } from '../services/whisper.service';
 
                 <section *ngIf="!accepted && !showUnwrapAnimation" class="consent-panel">
                   <p class="eyebrow">Consent required</p>
-                  <h1>You have a private WhisperWrap.</h1>
-                  <p>{{ data.senderName || 'Someone' }} has sent you a WhisperWrap through WhisperWrap.</p>
+                  <h1>You have a confidential Whisper.</h1>
+                  <p>{{ data.senderName || 'Someone' }} has sent you a Whisper.</p>
                   <p>Would you like to unwrap it now?</p>
 
                   <ion-button expand="block" (click)="accept()" [disabled]="isAccepting">
@@ -72,7 +72,7 @@ import { WhisperService } from '../services/whisper.service';
                 </section>
 
                 <section *ngIf="accepted && !showUnwrapAnimation" class="message-panel">
-                  <p class="eyebrow">Unwrapped message</p>
+                  <p class="eyebrow">Unwrapped your whisper</p>
                   <h1>{{ data.title }}</h1>
 
                   <p class="message-text">{{ data.message }}</p>
@@ -101,7 +101,7 @@ import { WhisperService } from '../services/whisper.service';
             </ng-container>
 
             <ng-template #loading>
-              <p>Loading your secure WhisperWrap...</p>
+              <p>Loading your secure Whisper...</p>
             </ng-template>
 
             <ng-template #unavailable>
