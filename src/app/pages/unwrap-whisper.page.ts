@@ -44,6 +44,13 @@ import { WhisperService } from '../services/whisper.service';
                 <section *ngIf="showUnwrapAnimation" class="unwrap-stage">
                   <div class="gift">
                     <div class="glow"></div>
+                    <div class="sparkles">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                     <div class="lid"></div>
                     <div class="bow"></div>
                     <div class="box"></div>
@@ -170,7 +177,7 @@ import { WhisperService } from '../services/whisper.service';
       background: linear-gradient(135deg, #9333ea, #db2777);
       border-radius: 10px;
       transform-origin: bottom left;
-      animation: openLid 1.4s ease-in-out forwards;
+      animation: openLid 2.6s ease-in-out forwards;
       z-index: 4;
     }
 
@@ -181,7 +188,7 @@ import { WhisperService } from '../services/whisper.service';
       width: 60px;
       height: 42px;
       z-index: 5;
-      animation: bowPop 1.2s ease-in-out forwards;
+      animation: bowPop 2.2s ease-in-out forwards;
     }
 
     .bow::before,
@@ -212,7 +219,7 @@ import { WhisperService } from '../services/whisper.service';
       height: 100px;
       background: radial-gradient(circle, rgba(251, 191, 36, 0.8), transparent 65%);
       opacity: 0;
-      animation: glowUp 1.8s ease-in-out forwards;
+      animation: glowUp 3.5s ease-in-out forwards;
       z-index: 1;
     }
 
@@ -226,6 +233,72 @@ import { WhisperService } from '../services/whisper.service';
       opacity: 0.75;
     }
 
+    .sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sparkles span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: gold;
+  border-radius: 50%;
+  opacity: 0;
+  animation: sparkle 3.5s infinite;
+}
+
+.sparkles span:nth-child(1) {
+  left: 20%;
+  bottom: 45%;
+  animation-delay: .2s;
+}
+
+.sparkles span:nth-child(2) {
+  left: 35%;
+  bottom: 60%;
+  animation-delay: .8s;
+}
+
+.sparkles span:nth-child(3) {
+  left: 55%;
+  bottom: 55%;
+  animation-delay: 1.4s;
+}
+
+.sparkles span:nth-child(4) {
+  left: 70%;
+  bottom: 50%;
+  animation-delay: 2s;
+}
+
+.sparkles span:nth-child(5) {
+  left: 50%;
+  bottom: 35%;
+  animation-delay: 2.6s;
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(.3);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1);
+  }
+
+  50% {
+    opacity: .8;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-90px) scale(.2);
+  }
+}
     @keyframes openLid {
       0% {
         transform: rotate(0) translateY(0);
@@ -322,7 +395,7 @@ export class UnwrapWhisperPage {
           setTimeout(() => {
             this.showUnwrapAnimation = false;
             this.accepted = true;
-          }, 1800);
+          }, 3800);
 
           return;
         }
