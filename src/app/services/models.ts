@@ -53,6 +53,7 @@ export interface WhisperInput {
   whisperType: WhisperType;
   wrapStyle: WrapStyle;
   deliveryFormat: DeliveryFormat;
+  prompt: string;
   senderIntent: string;
 }
 

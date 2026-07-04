@@ -15,6 +15,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
+import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
@@ -71,7 +72,7 @@ import { WhisperService } from '../services/whisper.service';
                 labelPlacement="stacked"
                 [(ngModel)]="draft.title"
                 (ionBlur)="persistDraft()"
-              />
+              ></ion-input>
             </ion-item>
 
             <ion-item>
@@ -81,7 +82,7 @@ import { WhisperService } from '../services/whisper.service';
                 rows="8"
                 [(ngModel)]="draft.message"
                 (ionBlur)="persistDraft()"
-              />
+              ></ion-textarea>
             </ion-item>
 
             <ion-item>
@@ -90,7 +91,7 @@ import { WhisperService } from '../services/whisper.service';
                 labelPlacement="stacked"
                 [(ngModel)]="draft.scriptureReference"
                 (ionBlur)="persistDraft()"
-              />
+              ></ion-input>
             </ion-item>
 
             <ion-item>
@@ -100,7 +101,7 @@ import { WhisperService } from '../services/whisper.service';
                 rows="4"
                 [(ngModel)]="draft.scriptureText"
                 (ionBlur)="persistDraft()"
-              />
+              ></ion-textarea>
             </ion-item>
 
             <ion-item>
@@ -110,21 +111,36 @@ import { WhisperService } from '../services/whisper.service';
                 rows="4"
                 [(ngModel)]="draft.shortPrayer"
                 (ionBlur)="persistDraft()"
-              />
+              ></ion-textarea>
             </ion-item>
 
             <section class="upload-panel" *ngIf="draft.deliveryFormat !== 'text'">
               <label for="audio-upload">Audio recording</label>
-              <input id="audio-upload" type="file" accept="audio/*" (change)="upload($event)" />
+              <input
+                id="audio-upload"
+                type="file"
+                accept="audio/*"
+                (change)="upload($event)"
+              />
+
               <p class="muted">
                 Audio delivery requires an uploaded audio file before consent can be sent.
               </p>
-              <p class="muted" *ngIf="draft.audioUrl">Audio uploaded and attached.</p>
+
+              <p class="muted" *ngIf="draft.audioUrl">
+                Audio uploaded and attached.
+              </p>
+
               <audio *ngIf="draft.audioUrl" controls [src]="draft.audioUrl"></audio>
             </section>
 
-            <ion-text class="error-text" *ngIf="error">{{ error }}</ion-text>
-            <ion-text class="success-text" *ngIf="notice">{{ notice }}</ion-text>
+            <ion-text class="error-text" *ngIf="error">
+              {{ error }}
+            </ion-text>
+
+            <ion-text class="success-text" *ngIf="notice">
+              {{ notice }}
+            </ion-text>
 
             <ion-button
               expand="block"
@@ -151,7 +167,12 @@ import { WhisperService } from '../services/whisper.service';
           <ion-card class="form-card">
             <ion-card-content>
               <p>No WhisperWrap draft is available.</p>
-              <ion-button expand="block" type="button" (click)="navigateToCreateWhisper()">
+
+              <ion-button
+                expand="block"
+                type="button"
+                (click)="navigateToCreateWhisper()"
+              >
                 Create WhisperWrap
               </ion-button>
             </ion-card-content>
@@ -180,20 +201,24 @@ export class ReviewWhisperPage {
 
   navigateToCreateWhisper(): void {
     this.focus.clearActiveElement();
-
-    setTimeout(() => {
-      void this.router.navigateByUrl('/create-whisper');
-    }, 50);
+    void this.router.navigateByUrl('/create-whisper');
   }
 
   persistDraft(): void {
-    if (this.service.draft) {
-      this.service.setDraft(this.service.draft);
-    }
+    const draft = this.service.draft;
+
+    if (!draft) return;
+
+    this.service.setDraft({
+      ...draft,
+      prompt: draft.prompt || draft.senderIntent,
+      senderIntent: draft.senderIntent || draft.prompt,
+    });
   }
 
   async regenerate(): Promise<void> {
     const draft = this.service.draft;
+
     if (!draft || this.isBusy) return;
 
     this.error = '';
@@ -207,6 +232,12 @@ export class ReviewWhisperPage {
         throw new Error('Please log in before regenerating a WhisperWrap.');
       }
 
+      const prompt = (draft.prompt || draft.senderIntent || '').trim();
+
+      if (!prompt) {
+        throw new Error('Prompt is missing. Please go back and create the WhisperWrap again.');
+      }
+
       const payload: WhisperInput = {
         recipientName: draft.recipientName,
         recipientEmail: draft.recipientEmail,
@@ -214,29 +245,31 @@ export class ReviewWhisperPage {
         whisperType: draft.whisperType,
         wrapStyle: draft.wrapStyle,
         deliveryFormat: draft.deliveryFormat,
-        senderIntent: draft.senderIntent,
+        prompt,
+        senderIntent: draft.senderIntent || prompt,
       };
 
-      this.service.generate(payload).subscribe({
-        next: generated => {
-          this.service.setDraft({
-            ...draft,
-            ...generated,
-            userId: user.uid,
-            senderId: user.uid,
-            status: 'generated',
-          });
+      const generated = await firstValueFrom(this.service.generate(payload));
 
-          this.notice = 'A fresh draft is ready for review.';
-          this.isRegenerating = false;
-        },
-        error: error => {
-          this.error = error instanceof Error ? error.message : 'Regeneration failed.';
-          this.isRegenerating = false;
-        },
+      if (!generated) {
+        throw new Error('The AI did not return a fresh WhisperWrap draft.');
+      }
+
+      this.service.setDraft({
+        ...draft,
+        ...payload,
+        ...generated,
+        userId: user.uid,
+        senderId: user.uid,
+        senderName: draft.senderName || user.displayName || user.email || '',
+        status: 'generated',
       });
+
+      this.notice = 'A fresh draft is ready for review.';
     } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Regeneration failed.';
+      this.error =
+        error instanceof Error ? error.message : 'Regeneration failed.';
+    } finally {
       this.isRegenerating = false;
     }
   }
@@ -271,7 +304,11 @@ export class ReviewWhisperPage {
     } catch (error) {
       this.notice = '';
       this.error =
-        error instanceof Error ? error.message : 'Audio upload failed. Please try again.';
+        error instanceof Error
+          ? error.message
+          : 'Audio upload failed. Please try again.';
+    } finally {
+      input.value = '';
     }
   }
 
@@ -287,19 +324,22 @@ export class ReviewWhisperPage {
       !draft.title?.trim() ||
       !draft.message?.trim() ||
       !draft.scriptureReference?.trim() ||
-      !draft.scriptureText?.trim()
+      !draft.scriptureText?.trim() ||
+      !draft.shortPrayer?.trim()
     ) {
-      this.error = 'Title, message, scripture reference, and scripture text are required.';
+      this.error =
+        'Title, message, scripture reference, scripture text, and short prayer are required.';
       return;
     }
 
-    if (!draft.recipientEmail && !draft.recipientPhone) {
+    if (!draft.recipientEmail?.trim() && !draft.recipientPhone?.trim()) {
       this.error = 'Recipient email or phone is required before sending consent.';
       return;
     }
 
     if (draft.deliveryFormat !== 'text' && !draft.audioUrl) {
-      this.error = 'Audio delivery requires an uploaded audio file before consent can be sent.';
+      this.error =
+        'Audio delivery requires an uploaded audio file before consent can be sent.';
       return;
     }
 
@@ -314,10 +354,13 @@ export class ReviewWhisperPage {
         throw new Error('Please log in before sending consent.');
       }
 
+      const prompt = (draft.prompt || draft.senderIntent || '').trim();
       const senderName = draft.senderName || user.displayName || user.email || 'Sender';
 
       const draftToSave = {
         ...draft,
+        prompt,
+        senderIntent: draft.senderIntent || prompt,
         userId: user.uid,
         senderId: user.uid,
         senderName,
@@ -326,38 +369,24 @@ export class ReviewWhisperPage {
 
       const whisperId = await this.service.saveDraftToFirestore(draftToSave);
 
-      const sendPayload = {
+      const response = await firstValueFrom(this.service.sendConsent(whisperId));
+
+      this.service.setDraft({
         ...draftToSave,
         id: whisperId,
-      };
-
-      this.service.sendConsent(whisperId).subscribe({
-        next: response => {
-          this.service.setDraft({
-            ...sendPayload,
-            status: 'consent_sent',
-            unwrapLink: response.unwrapLink,
-          });
-
-          this.focus.clearActiveElement();
-
-          setTimeout(() => {
-            void this.router.navigateByUrl('/whisper-sent').finally(() => {
-              this.isSending = false;
-            });
-          }, 50);
-        },
-        error: error => {
-          this.error = error instanceof Error ? error.message : 'Consent could not be sent.';
-          this.isSending = false;
-        },
+        status: 'consent_sent',
+        unwrapLink: response.unwrapLink,
       });
+
+      this.focus.clearActiveElement();
+
+      await this.router.navigateByUrl('/whisper-sent');
     } catch (error) {
       this.error =
         error instanceof Error
           ? error.message
           : 'Could not prepare the WhisperWrap for sending.';
-
+    } finally {
       this.isSending = false;
     }
   }

@@ -11,7 +11,7 @@ import { WhisperService } from '../services/whisper.service';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>WhisperWrap Sent</ion-title>
+        <ion-title>Whisper Sent</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -19,7 +19,7 @@ import { WhisperService } from '../services/whisper.service';
       <main class="page-shell">
         <section class="hero-copy">
           <p class="eyebrow">Step 3 of 3</p>
-          <h1>WhisperWrap sent.</h1>
+          <h1>Whisper sent.</h1>
           <p class="muted">The recipient receives a secure consent link before any message content is revealed.</p>
         </section>
 

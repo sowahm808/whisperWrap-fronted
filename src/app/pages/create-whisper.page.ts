@@ -18,9 +18,15 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
+
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
-import { DeliveryFormat, WhisperInput, WhisperType, WrapStyle } from '../services/models';
+import {
+  DeliveryFormat,
+  WhisperInput,
+  WhisperType,
+  WrapStyle,
+} from '../services/models';
 import { WhisperService } from '../services/whisper.service';
 
 @Component({
@@ -46,7 +52,7 @@ import { WhisperService } from '../services/whisper.service';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Create WhisperWrap</ion-title>
+        <ion-title>Create Whisper</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -55,7 +61,9 @@ import { WhisperService } from '../services/whisper.service';
         <section class="hero-copy">
           <p class="eyebrow">Step 1 of 3</p>
           <h1>Shape the WhisperWrap.</h1>
-          <p class="muted">Provide enough context for a thoughtful draft while keeping recipient consent at the center.</p>
+          <p class="muted">
+            Provide enough context for a thoughtful draft while keeping recipient consent at the center.
+          </p>
         </section>
 
         <ol class="progress-steps" aria-label="WhisperWrap progress">
@@ -68,57 +76,99 @@ import { WhisperService } from '../services/whisper.service';
           <ion-card-content>
             <form [formGroup]="form" novalidate>
               <ion-item>
-                <ion-input label="Recipient name" labelPlacement="stacked" formControlName="recipientName"></ion-input>
+                <ion-input
+                  label="Recipient name"
+                  labelPlacement="stacked"
+                  formControlName="recipientName"
+                ></ion-input>
               </ion-item>
-              <ion-text class="error-text" *ngIf="messageFor('recipientName')">{{ messageFor('recipientName') }}</ion-text>
+              <ion-text class="error-text" *ngIf="messageFor('recipientName')">
+                {{ messageFor('recipientName') }}
+              </ion-text>
 
               <ion-item>
-                <ion-input label="Recipient email" labelPlacement="stacked" type="email" formControlName="recipientEmail"></ion-input>
+                <ion-input
+                  label="Recipient email"
+                  labelPlacement="stacked"
+                  type="email"
+                  formControlName="recipientEmail"
+                ></ion-input>
               </ion-item>
-              <ion-text class="error-text" *ngIf="messageFor('recipientEmail')">{{ messageFor('recipientEmail') }}</ion-text>
+              <ion-text class="error-text" *ngIf="messageFor('recipientEmail')">
+                {{ messageFor('recipientEmail') }}
+              </ion-text>
 
               <ion-item>
-                <ion-input label="Recipient phone" labelPlacement="stacked" type="tel" formControlName="recipientPhone"></ion-input>
+                <ion-input
+                  label="Recipient phone"
+                  labelPlacement="stacked"
+                  type="tel"
+                  formControlName="recipientPhone"
+                ></ion-input>
               </ion-item>
-              <ion-text class="error-text" *ngIf="messageFor('recipientPhone')">{{ messageFor('recipientPhone') }}</ion-text>
+              <ion-text class="error-text" *ngIf="messageFor('recipientPhone')">
+                {{ messageFor('recipientPhone') }}
+              </ion-text>
 
               <ion-item>
-                <ion-select label="Whisper type" labelPlacement="stacked" formControlName="whisperType">
-                  <ion-select-option *ngFor="let type of types" [value]="type">{{ formatOption(type) }}</ion-select-option>
+                <ion-select
+                  label="Whisper type"
+                  labelPlacement="stacked"
+                  formControlName="whisperType"
+                >
+                  <ion-select-option *ngFor="let type of types" [value]="type">
+                    {{ formatOption(type) }}
+                  </ion-select-option>
                 </ion-select>
               </ion-item>
 
               <ion-item>
-                <ion-select label="Wrap style" labelPlacement="stacked" formControlName="wrapStyle">
-                  <ion-select-option *ngFor="let style of styles" [value]="style">{{ formatOption(style) }}</ion-select-option>
+                <ion-select
+                  label="Wrap style"
+                  labelPlacement="stacked"
+                  formControlName="wrapStyle"
+                >
+                  <ion-select-option *ngFor="let style of styles" [value]="style">
+                    {{ formatOption(style) }}
+                  </ion-select-option>
                 </ion-select>
               </ion-item>
 
               <ion-item>
-                <ion-select label="Delivery format" labelPlacement="stacked" formControlName="deliveryFormat">
-                  <ion-select-option *ngFor="let format of formats" [value]="format">{{ formatOption(format) }}</ion-select-option>
+                <ion-select
+                  label="Delivery format"
+                  labelPlacement="stacked"
+                  formControlName="deliveryFormat"
+                >
+                  <ion-select-option *ngFor="let format of formats" [value]="format">
+                    {{ formatOption(format) }}
+                  </ion-select-option>
                 </ion-select>
               </ion-item>
 
               <ion-item>
                 <ion-textarea
-                  label="Sender intent"
+                  label="Prompt"
                   labelPlacement="stacked"
-                  formControlName="senderIntent"
+                  formControlName="prompt"
                   rows="6"
-                  placeholder="Share the occasion, relationship context, tone, and anything sensitive the AI should honor."
+                  placeholder="Example: Write a gentle encouragement message for my sister who is starting a new job. Keep it warm, biblical, and hopeful."
                 ></ion-textarea>
               </ion-item>
-
-              <ion-text class="error-text" *ngIf="messageFor('senderIntent')">
-                {{ messageFor('senderIntent') }}
+              <ion-text class="error-text" *ngIf="messageFor('prompt')">
+                {{ messageFor('prompt') }}
               </ion-text>
 
               <ion-text class="error-text" *ngIf="error">
                 {{ error }}
               </ion-text>
 
-              <ion-button expand="block" type="button" [disabled]="isGenerating" (click)="generate()">
+              <ion-button
+                expand="block"
+                type="button"
+                [disabled]="isGenerating"
+                (click)="generate()"
+              >
                 {{ isGenerating ? 'Drafting...' : 'Generate with AI' }}
               </ion-button>
             </form>
@@ -166,11 +216,11 @@ export class CreateWhisperPage {
     whisperType: ['congratulations' as WhisperType, Validators.required],
     wrapStyle: ['gentle' as WrapStyle, Validators.required],
     deliveryFormat: ['text' as DeliveryFormat, Validators.required],
-    senderIntent: ['', [Validators.required, Validators.minLength(20)]],
+    prompt: ['', [Validators.required, Validators.minLength(20), Validators.maxLength(2000)]],
   });
 
   formatOption(value: string): string {
-    return value.replace('_', ' + ');
+    return value.replace(/_/g, ' + ');
   }
 
   messageFor(controlName: keyof typeof this.form.controls): string {
@@ -180,8 +230,13 @@ export class CreateWhisperPage {
 
     if (control.errors['required']) return 'This field is required.';
     if (control.errors['email']) return 'Enter a valid email address.';
+
     if (control.errors['minlength']) {
       return `Enter at least ${control.errors['minlength'].requiredLength} characters.`;
+    }
+
+    if (control.errors['maxlength']) {
+      return `Enter no more than ${control.errors['maxlength'].requiredLength} characters.`;
     }
 
     return '';
@@ -205,7 +260,25 @@ export class CreateWhisperPage {
         return;
       }
 
-      const payload = this.form.getRawValue() as WhisperInput;
+      const raw = this.form.getRawValue();
+
+      const prompt = raw.prompt?.trim() ?? '';
+
+      const payload: WhisperInput = {
+        recipientName: raw.recipientName?.trim() ?? '',
+        recipientEmail: raw.recipientEmail?.trim() ?? '',
+        recipientPhone: raw.recipientPhone?.trim() ?? '',
+        whisperType: raw.whisperType as WhisperType,
+        wrapStyle: raw.wrapStyle as WrapStyle,
+        deliveryFormat: raw.deliveryFormat as DeliveryFormat,
+
+        // Backend now uses this.
+        prompt,
+
+        // Keep this for existing backend/frontend compatibility.
+        senderIntent: prompt,
+      };
+
       const generated = await firstValueFrom(this.service.generate(payload));
 
       if (!generated) {
@@ -223,11 +296,12 @@ export class CreateWhisperPage {
 
       this.focus.clearActiveElement();
 
-      await this.router.navigateByUrl('/review-whisper', {
-        replaceUrl: false,
-      });
+      await this.router.navigateByUrl('/review-whisper');
     } catch (e: unknown) {
-      this.error = e instanceof Error ? e.message : 'Failed to generate WhisperWrap. Please try again.';
+      this.error =
+        e instanceof Error
+          ? e.message
+          : 'Failed to generate WhisperWrap. Please try again.';
     } finally {
       this.isGenerating = false;
     }
