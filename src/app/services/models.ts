@@ -49,7 +49,7 @@ export interface WhisperInput {
   // Either email or phone (or both)
   recipientEmail?: string | null;
   recipientPhone?: string | null;
-
+  senderName?: string;
   whisperType: WhisperType;
   wrapStyle: WrapStyle;
   deliveryFormat: DeliveryFormat;

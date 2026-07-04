@@ -264,10 +264,17 @@ export class CreateWhisperPage {
 
       const prompt = raw.prompt?.trim() ?? '';
 
+      
+const senderName =
+  user.displayName?.trim() ||
+  user.email?.split('@')[0] ||
+  'Someone';
+
       const payload: WhisperInput = {
         recipientName: raw.recipientName?.trim() ?? '',
         recipientEmail: raw.recipientEmail?.trim() ?? '',
         recipientPhone: raw.recipientPhone?.trim() ?? '',
+        senderName,
         whisperType: raw.whisperType as WhisperType,
         wrapStyle: raw.wrapStyle as WrapStyle,
         deliveryFormat: raw.deliveryFormat as DeliveryFormat,
