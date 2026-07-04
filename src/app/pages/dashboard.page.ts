@@ -45,7 +45,7 @@ import { UserProfile, WhisperRecord } from '../services/models';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Dashboard</ion-title>
+        <ion-title>Whisper Pad</ion-title>
       </ion-toolbar>
     </ion-header>
 
