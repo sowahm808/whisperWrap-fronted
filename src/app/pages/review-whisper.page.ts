@@ -19,7 +19,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
-import { WhisperInput } from '../services/models';
+import { RecipientGender, WhisperInput } from '../services/models';
 import { WhisperService } from '../services/whisper.service';
 
 @Component({
@@ -65,6 +65,12 @@ import { WhisperService } from '../services/whisper.service';
         <ion-card class="form-card" *ngIf="service.draft as draft; else noDraft">
           <ion-card-content>
             <p class="muted">Nothing is delivered until the recipient gives consent.</p>
+
+            <section class="review-details" aria-label="Recipient details">
+              <p><strong>Recipient name:</strong> {{ draft.recipientName }}</p>
+              <p><strong>Name to address recipient by:</strong> {{ addressName(draft) }}</p>
+              <p><strong>Recipient gender / pronouns:</strong> {{ genderPronouns(draft.recipientGender) }}</p>
+            </section>
 
             <ion-item>
               <ion-input
@@ -199,6 +205,16 @@ export class ReviewWhisperPage {
     return this.isRegenerating || this.isSending;
   }
 
+  addressName(draft: { recipientAddressName?: string | null; recipientName?: string | null }): string {
+    return draft.recipientAddressName?.trim() || draft.recipientName?.trim() || 'Recipient';
+  }
+
+  genderPronouns(gender?: RecipientGender | null): string {
+    if (gender === 'male') return 'Male — he/him/his';
+    if (gender === 'female') return 'Female — she/her/her';
+    return 'Not available for this older draft';
+  }
+
   navigateToCreateWhisper(): void {
     this.focus.clearActiveElement();
     void this.router.navigateByUrl('/create-whisper');
@@ -211,6 +227,7 @@ export class ReviewWhisperPage {
 
     this.service.setDraft({
       ...draft,
+      recipientAddressName: this.addressName(draft),
       prompt: draft.prompt || draft.senderIntent,
       senderIntent: draft.senderIntent || draft.prompt,
     });
@@ -238,13 +255,22 @@ export class ReviewWhisperPage {
         throw new Error('Prompt is missing. Please go back and create the WhisperWrap again.');
       }
 
+      const recipientGender = draft.recipientGender;
+
+      if (!recipientGender) {
+        throw new Error('Recipient gender / pronouns are missing. Please go back and create the WhisperWrap again.');
+      }
+
       const payload: WhisperInput = {
         recipientName: draft.recipientName,
+        recipientAddressName: this.addressName(draft),
+        recipientGender,
         recipientEmail: draft.recipientEmail,
         recipientPhone: draft.recipientPhone,
         whisperType: draft.whisperType,
         wrapStyle: draft.wrapStyle,
         deliveryFormat: draft.deliveryFormat,
+        senderName: draft.senderName || user.displayName || user.email || '',
         prompt,
         senderIntent: draft.senderIntent || prompt,
       };
@@ -359,6 +385,7 @@ export class ReviewWhisperPage {
 
       const draftToSave = {
         ...draft,
+        recipientAddressName: this.addressName(draft),
         prompt,
         senderIntent: draft.senderIntent || prompt,
         userId: user.uid,

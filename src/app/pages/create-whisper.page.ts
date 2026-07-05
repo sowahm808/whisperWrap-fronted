@@ -23,6 +23,7 @@ import { AuthService } from '../services/auth.service';
 import { FocusService } from '../services/focus.service';
 import {
   DeliveryFormat,
+  RecipientGender,
   WhisperInput,
   WhisperType,
   WrapStyle,
@@ -84,6 +85,30 @@ import { WhisperService } from '../services/whisper.service';
               </ion-item>
               <ion-text class="error-text" *ngIf="messageFor('recipientName')">
                 {{ messageFor('recipientName') }}
+              </ion-text>
+
+              <ion-item>
+                <ion-input
+                  label="Name to address recipient by"
+                  labelPlacement="stacked"
+                  formControlName="recipientAddressName"
+                  placeholder="Example: Mom, Auntie Grace, Pastor John"
+                ></ion-input>
+              </ion-item>
+
+              <ion-item>
+                <ion-select
+                  label="Recipient gender / pronouns"
+                  labelPlacement="stacked"
+                  formControlName="recipientGender"
+                  interface="popover"
+                >
+                  <ion-select-option value="male">Male — he/him/his</ion-select-option>
+                  <ion-select-option value="female">Female — she/her/her</ion-select-option>
+                </ion-select>
+              </ion-item>
+              <ion-text class="error-text" *ngIf="messageFor('recipientGender')">
+                {{ messageFor('recipientGender') }}
               </ion-text>
 
               <ion-item>
@@ -211,6 +236,8 @@ export class CreateWhisperPage {
 
   form = this.fb.group({
     recipientName: ['', [Validators.required, Validators.minLength(2)]],
+    recipientAddressName: [''],
+    recipientGender: [null as RecipientGender | null, Validators.required],
     recipientEmail: ['', [Validators.required, Validators.email]],
     recipientPhone: ['', [Validators.required, Validators.minLength(7)]],
     whisperType: ['congratulations' as WhisperType, Validators.required],
@@ -262,16 +289,25 @@ export class CreateWhisperPage {
 
       const raw = this.form.getRawValue();
 
+      const recipientName = raw.recipientName?.trim() ?? '';
+      const recipientAddressName = raw.recipientAddressName?.trim() || recipientName;
+      const recipientGender = raw.recipientGender;
       const prompt = raw.prompt?.trim() ?? '';
 
-      
-const senderName =
-  user.displayName?.trim() ||
-  user.email?.split('@')[0] ||
-  'Someone';
+      if (!recipientGender) {
+        this.error = 'Please choose recipient gender / pronouns before generating.';
+        return;
+      }
+
+      const senderName =
+        user.displayName?.trim() ||
+        user.email?.split('@')[0] ||
+        'Someone';
 
       const payload: WhisperInput = {
-        recipientName: raw.recipientName?.trim() ?? '',
+        recipientName,
+        recipientAddressName,
+        recipientGender,
         recipientEmail: raw.recipientEmail?.trim() ?? '',
         recipientPhone: raw.recipientPhone?.trim() ?? '',
         senderName,

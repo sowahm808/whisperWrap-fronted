@@ -49,12 +49,12 @@ sendConsent(whisperId: string) {
 
 getUnwrap(token: string) {
   return this.http.get<any>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(
-    map(response => ({
+    map(response => this.normalizeRecord({
       ...response,
       ...response.generatedContent,
       audioUrl: response.audioUrl ?? null,
       status: response.status ?? 'opened',
-    }) as WhisperRecord),
+    })),
     catchError(error => this.handleError(error)),
   );
 }
@@ -69,12 +69,12 @@ acceptUnwrap(token: string) {
   return this.http
     .post<any>(`${this.base}/unwrap/${encodeURIComponent(token)}/accept`, {})
     .pipe(
-      map(response => ({
+      map(response => this.normalizeRecord({
         ...response,
         ...response.generatedContent,
         audioUrl: response.audioUrl ?? null,
         status: response.status ?? 'accepted',
-      }) as WhisperRecord),
+      })),
       catchError(error => this.handleError(error)),
     );
 }
@@ -86,8 +86,9 @@ acceptUnwrap(token: string) {
   }
 
   setDraft(draft: WhisperRecord) {
-    this.draft = draft;
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    const normalizedDraft = this.normalizeRecord(draft);
+    this.draft = normalizedDraft;
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(normalizedDraft));
   }
 
   clearDraft() {
@@ -189,11 +190,18 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
   private restoreDraft() {
     try {
       const saved = sessionStorage.getItem(DRAFT_KEY);
-      return saved ? (JSON.parse(saved) as WhisperRecord) : undefined;
+      return saved ? this.normalizeRecord(JSON.parse(saved)) : undefined;
     } catch {
       sessionStorage.removeItem(DRAFT_KEY);
       return undefined;
     }
+  }
+
+  private normalizeRecord(record: WhisperRecord): WhisperRecord {
+    return {
+      ...record,
+      recipientAddressName: record.recipientAddressName?.trim() || record.recipientName || 'Recipient',
+    };
   }
 
   private handleError(error: unknown): Observable<never> {
