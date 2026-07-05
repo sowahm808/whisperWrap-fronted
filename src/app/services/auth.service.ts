@@ -37,9 +37,7 @@ export class AuthService {
     return from(signInWithEmailAndPassword(this.auth, email.trim(), password));
   }
 
-  // sendPasswordResetEmail(email: string) {
-  //   return from(sendPasswordResetEmail(this.auth, email.trim()));
-  // }
+  
 resetPassword(email: string) {
   return from(
     firebaseSendPasswordResetEmail(this.auth, email.trim().toLowerCase(), {
@@ -208,7 +206,7 @@ resetPassword(email: string) {
         ...(photoURL ? { photoURL } : {}),
         ...(isNewUser
           ? {
-              subscriptionStatus: 'inactive',
+              subscriptionStatus: 'active',
               createdAt: serverTimestamp(),
             }
           : {}),
