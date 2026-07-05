@@ -26,6 +26,8 @@ export type DeliveryFormat =
   | 'audio'
   | 'text_audio';
 
+export type RecipientGender = 'male' | 'female';
+
 export type WhisperStatus =
   | 'draft'
   | 'generated'
@@ -45,6 +47,8 @@ export interface UserProfile {
 
 export interface WhisperInput {
   recipientName: string;
+  recipientAddressName: string;
+  recipientGender: RecipientGender;
 
   // Either email or phone (or both)
   recipientEmail?: string | null;
@@ -58,6 +62,8 @@ export interface WhisperInput {
 }
 
 export interface GeneratedWhisper {
+  recipientAddressName: string;
+  recipientGender: RecipientGender;
   title: string;
   message: string;
   scriptureReference: string;
