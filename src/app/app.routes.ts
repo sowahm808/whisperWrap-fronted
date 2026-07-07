@@ -28,6 +28,18 @@ export const appRoutes: Routes = [
   },
 
   {
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./pages/privacy-policy.page').then(m => m.PrivacyPolicyPage),
+  },
+
+  {
+    path: 'terms-and-conditions',
+    loadComponent: () =>
+      import('./pages/terms-and-conditions.page').then(m => m.TermsAndConditionsPage),
+  },
+
+  {
     path: 'create-whisper',
     canActivate: [authGuard],
     loadComponent: () =>

@@ -393,3 +393,55 @@ audio {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+.legal-links-card {
+  margin-top: 1rem;
+}
+
+.legal-link-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.legal-link-list a {
+  background: #fff7ef;
+  border: 1px solid #ead9ca;
+  border-radius: 18px;
+  color: var(--ion-color-primary);
+  display: block;
+  font-weight: 800;
+  padding: 0.95rem 1rem;
+  text-decoration: none;
+}
+
+.legal-link-list a:focus,
+.legal-link-list a:hover {
+  background: #efe9ff;
+  border-color: rgba(var(--ion-color-primary-rgb), 0.25);
+}
+
+.legal-shell {
+  width: min(100%, 860px);
+}
+
+.legal-card section + section {
+  border-top: 1px solid #ead9ca;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+}
+
+.legal-card h2 {
+  margin: 0 0 0.5rem;
+}
+
+.legal-card p {
+  color: var(--ww-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.legal-updated {
+  color: var(--ww-ink) !important;
+  font-weight: 800;
+  margin-bottom: 1.25rem !important;
+}

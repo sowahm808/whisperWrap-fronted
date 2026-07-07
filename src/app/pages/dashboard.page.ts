@@ -1,6 +1,6 @@
 import { NgClass, NgFor, NgIf, TitleCasePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -41,6 +41,7 @@ import { UserProfile, WhisperRecord } from '../services/models';
     IonCard,
     IonCardContent,
     IonText,
+    RouterLink,
   ],
   template: `
     <ion-header>
@@ -134,6 +135,22 @@ import { UserProfile, WhisperRecord } from '../services/models';
 
               <span class="status-pill">{{ formatStatus(whisper.status) }}</span>
             </div>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card class="form-card compact-card legal-links-card">
+          <ion-card-content>
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Legal</p>
+                <h2>Policies</h2>
+              </div>
+            </div>
+
+            <nav class="legal-link-list" aria-label="Legal pages">
+              <a routerLink="/privacy-policy">Privacy Policy</a>
+              <a routerLink="/terms-and-conditions">Terms & Conditions</a>
+            </nav>
           </ion-card-content>
         </ion-card>
       </main>
