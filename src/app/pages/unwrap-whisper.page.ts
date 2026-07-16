@@ -1,4 +1,4 @@
-import { NgIf } from '@angular/common';
+import { NgClass, NgIf } from '@angular/common';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -17,6 +17,7 @@ import { WhisperService } from '../services/whisper.service';
 @Component({
   standalone: true,
   imports: [
+    NgClass,
     NgIf,
     IonContent,
     IonHeader,
@@ -41,7 +42,11 @@ import { WhisperService } from '../services/whisper.service';
             <ng-container *ngIf="!isLoading; else loading">
               <ng-container *ngIf="data; else unavailable">
 
-                <section *ngIf="showUnwrapAnimation" class="unwrap-stage">
+                <section
+                  *ngIf="showUnwrapAnimation"
+                  class="unwrap-stage"
+                  [ngClass]="wrapThemeClass"
+                >
                   <div class="gift">
                     <div class="glow"></div>
                     <div class="sparkles">
@@ -134,7 +139,24 @@ import { WhisperService } from '../services/whisper.service';
       width: 170px;
       height: 170px;
       margin-bottom: 28px;
+      --wrap-primary: #7c3aed;
+      --wrap-secondary: #c026d3;
+      --wrap-accent: #9333ea;
+      --wrap-ribbon: #fbbf24;
+      --wrap-sparkle: gold;
+      --wrap-glow: rgba(251, 191, 36, 0.8);
+      --wrap-shadow: rgba(124, 58, 237, 0.35);
     }
+
+    .wrap-prophetic .gift { --wrap-primary: #312e81; --wrap-secondary: #7e22ce; --wrap-accent: #facc15; --wrap-ribbon: #facc15; --wrap-sparkle: #fde68a; --wrap-glow: rgba(250, 204, 21, 0.82); --wrap-shadow: rgba(49, 46, 129, 0.42); }
+    .wrap-elegant .gift { --wrap-primary: #111827; --wrap-secondary: #57534e; --wrap-accent: #eab308; --wrap-ribbon: #f8fafc; --wrap-sparkle: #f5f5f4; --wrap-glow: rgba(234, 179, 8, 0.64); --wrap-shadow: rgba(17, 24, 39, 0.38); }
+    .wrap-celebration .gift { --wrap-primary: #f97316; --wrap-secondary: #ec4899; --wrap-accent: #fde047; --wrap-ribbon: #22d3ee; --wrap-sparkle: #fef08a; --wrap-glow: rgba(236, 72, 153, 0.62); --wrap-shadow: rgba(249, 115, 22, 0.35); }
+    .wrap-healing .gift { --wrap-primary: #0f766e; --wrap-secondary: #22c55e; --wrap-accent: #99f6e4; --wrap-ribbon: #ccfbf1; --wrap-sparkle: #a7f3d0; --wrap-glow: rgba(45, 212, 191, 0.66); --wrap-shadow: rgba(20, 184, 166, 0.35); }
+    .wrap-reconciliation .gift { --wrap-primary: #be123c; --wrap-secondary: #f97316; --wrap-accent: #fed7aa; --wrap-ribbon: #fde68a; --wrap-sparkle: #fed7aa; --wrap-glow: rgba(251, 146, 60, 0.68); --wrap-shadow: rgba(190, 18, 60, 0.32); }
+    .wrap-gratitude .gift { --wrap-primary: #ca8a04; --wrap-secondary: #f59e0b; --wrap-accent: #fef3c7; --wrap-ribbon: #fff7ed; --wrap-sparkle: #fef3c7; --wrap-glow: rgba(245, 158, 11, 0.72); --wrap-shadow: rgba(202, 138, 4, 0.34); }
+    .wrap-romantic .gift { --wrap-primary: #be185d; --wrap-secondary: #f43f5e; --wrap-accent: #fecdd3; --wrap-ribbon: #ffe4e6; --wrap-sparkle: #fecdd3; --wrap-glow: rgba(244, 63, 94, 0.64); --wrap-shadow: rgba(190, 24, 93, 0.34); }
+    .wrap-encouragement .gift { --wrap-primary: #2563eb; --wrap-secondary: #38bdf8; --wrap-accent: #fde047; --wrap-ribbon: #fef08a; --wrap-sparkle: #bae6fd; --wrap-glow: rgba(56, 189, 248, 0.66); --wrap-shadow: rgba(37, 99, 235, 0.33); }
+    .wrap-legacy .gift { --wrap-primary: #0f172a; --wrap-secondary: #1d4ed8; --wrap-accent: #d97706; --wrap-ribbon: #fcd34d; --wrap-sparkle: #fcd34d; --wrap-glow: rgba(217, 119, 6, 0.58); --wrap-shadow: rgba(15, 23, 42, 0.44); }
 
     .box {
       position: absolute;
@@ -142,9 +164,9 @@ import { WhisperService } from '../services/whisper.service';
       left: 20px;
       width: 130px;
       height: 95px;
-      background: linear-gradient(135deg, #7c3aed, #c026d3);
+      background: linear-gradient(135deg, var(--wrap-primary), var(--wrap-secondary));
       border-radius: 12px;
-      box-shadow: 0 18px 40px rgba(124, 58, 237, 0.35);
+      box-shadow: 0 18px 40px var(--wrap-shadow);
       z-index: 2;
     }
 
@@ -174,7 +196,7 @@ import { WhisperService } from '../services/whisper.service';
       left: 12px;
       width: 146px;
       height: 38px;
-      background: linear-gradient(135deg, #9333ea, #db2777);
+      background: linear-gradient(135deg, var(--wrap-accent), var(--wrap-secondary));
       border-radius: 10px;
       transform-origin: bottom left;
       animation: openLid 2.6s ease-in-out forwards;
@@ -197,7 +219,7 @@ import { WhisperService } from '../services/whisper.service';
       position: absolute;
       width: 34px;
       height: 34px;
-      background: #fbbf24;
+      background: var(--wrap-ribbon);
       border-radius: 50% 50% 50% 0;
     }
 
@@ -217,7 +239,7 @@ import { WhisperService } from '../services/whisper.service';
       bottom: 45px;
       width: 100px;
       height: 100px;
-      background: radial-gradient(circle, rgba(251, 191, 36, 0.8), transparent 65%);
+      background: radial-gradient(circle, var(--wrap-glow), transparent 65%);
       opacity: 0;
       animation: glowUp 3.5s ease-in-out forwards;
       z-index: 1;
@@ -243,7 +265,7 @@ import { WhisperService } from '../services/whisper.service';
   position: absolute;
   width: 8px;
   height: 8px;
-  background: gold;
+  background: var(--wrap-sparkle);
   border-radius: 50%;
   opacity: 0;
   animation: sparkle 3.5s infinite;
@@ -354,6 +376,10 @@ import { WhisperService } from '../services/whisper.service';
 })
 export class UnwrapWhisperPage {
   data?: WhisperRecord;
+
+  get wrapThemeClass(): string {
+    return `wrap-${this.data?.wrapStyle ?? 'gentle'}`;
+  }
 
   accepted = false;
   isLoading = true;
