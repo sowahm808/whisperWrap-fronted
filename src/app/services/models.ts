@@ -19,7 +19,11 @@ export type WrapStyle =
   | 'elegant'
   | 'celebration'
   | 'healing'
-  | 'reconciliation';
+  | 'reconciliation'
+  | 'gratitude'
+  | 'romantic'
+  | 'encouragement'
+  | 'legacy';
 
 export type DeliveryFormat =
   | 'text'
