@@ -5,7 +5,7 @@ import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage
 import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-import { ConsentResponse, GeneratedWhisper, WhisperInput, WhisperRecord } from './models';
+import { ConsentResponse, GeneratedWhisper, WhisperInput, WhisperRecord, WrapStyle } from './models';
 const DRAFT_KEY = 'whisperwrap:draft';
 
 @Injectable({ providedIn: 'root' })
@@ -49,12 +49,7 @@ sendConsent(whisperId: string) {
 
 getUnwrap(token: string) {
   return this.http.get<any>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(
-    map(response => this.normalizeRecord({
-      ...response,
-      ...response.generatedContent,
-      audioUrl: response.audioUrl ?? null,
-      status: response.status ?? 'opened',
-    })),
+    map(response => this.normalizeUnwrapResponse(response, 'opened')),
     catchError(error => this.handleError(error)),
   );
 }
@@ -69,12 +64,7 @@ acceptUnwrap(token: string) {
   return this.http
     .post<any>(`${this.base}/unwrap/${encodeURIComponent(token)}/accept`, {})
     .pipe(
-      map(response => this.normalizeRecord({
-        ...response,
-        ...response.generatedContent,
-        audioUrl: response.audioUrl ?? null,
-        status: response.status ?? 'accepted',
-      })),
+      map(response => this.normalizeUnwrapResponse(response, 'accepted')),
       catchError(error => this.handleError(error)),
     );
 }
@@ -197,11 +187,49 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
     }
   }
 
+  private normalizeUnwrapResponse(response: any, defaultStatus: WhisperRecord['status']): WhisperRecord {
+    const source = response?.whisper ?? response?.record ?? response ?? {};
+    const generatedContent = source.generatedContent ?? response?.generatedContent ?? {};
+
+    return this.normalizeRecord({
+      ...source,
+      ...generatedContent,
+      wrapStyle: this.normalizeWrapStyle(
+        source.wrapStyle ??
+          source.wrap_style ??
+          source.style ??
+          response?.wrapStyle ??
+          response?.wrap_style ??
+          response?.style,
+      ),
+      audioUrl: source.audioUrl ?? response?.audioUrl ?? null,
+      status: source.status ?? response?.status ?? defaultStatus,
+    } as WhisperRecord);
+  }
+
   private normalizeRecord(record: WhisperRecord): WhisperRecord {
     return {
       ...record,
+      wrapStyle: this.normalizeWrapStyle(record.wrapStyle),
       recipientAddressName: record.recipientAddressName?.trim() || record.recipientName || 'Recipient',
     };
+  }
+
+  private normalizeWrapStyle(style: unknown): WrapStyle {
+    const allowedStyles: WrapStyle[] = [
+      'gentle',
+      'prophetic',
+      'elegant',
+      'celebration',
+      'healing',
+      'reconciliation',
+      'gratitude',
+      'romantic',
+      'encouragement',
+      'legacy',
+    ];
+
+    return allowedStyles.includes(style as WrapStyle) ? (style as WrapStyle) : 'gentle';
   }
 
   private handleError(error: unknown): Observable<never> {
