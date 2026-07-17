@@ -435,36 +435,84 @@ export class UnwrapWhisperPage {
     });
   }
 
-  accept() {
-    if (this.isAccepting) return;
+  // accept() {
+  //   if (this.isAccepting) return;
 
-    this.error = '';
-    this.isAccepting = true;
+  //   this.error = '';
+  //   this.isAccepting = true;
 
-    this.service.acceptUnwrap(this.token).subscribe({
-      next: data => {
-        this.data = { ...(this.data ?? data), ...data };
+  //   this.service.acceptUnwrap(this.token).subscribe({
+  //     next: data => {
+  //       this.data = { ...(this.data ?? data), ...data };
+
+  //       this.isAccepting = false;
+  //       this.accepted = false;
+  //       this.showUnwrapAnimation = true;
+
+  //       const animationKey = `whisperwrap:unwrap-animation:${this.token}`;
+  //       sessionStorage.setItem(animationKey, 'true');
+
+  //       setTimeout(() => {
+  //         this.showUnwrapAnimation = false;
+  //         this.accepted = true;
+  //       }, 1800);
+  //     },
+  //     error: e => {
+  //       this.error = e.message;
+  //       this.isAccepting = false;
+  //       this.showUnwrapAnimation = false;
+  //     },
+  //   });
+  // }
+accept() {
+  if (this.isAccepting || !this.data) return;
+
+  this.error = '';
+  this.isAccepting = true;
+
+  const selectedWrapStyle = this.data.wrapStyle;
+
+  this.service
+    .acceptUnwrap(this.token, selectedWrapStyle)
+    .subscribe({
+      next: acceptedData => {
+        this.data = {
+          ...this.data,
+          ...acceptedData,
+
+          // Preserve the style selected during creation.
+          wrapStyle:
+            acceptedData.wrapStyle ??
+            selectedWrapStyle ??
+            'gentle',
+        };
 
         this.isAccepting = false;
         this.accepted = false;
         this.showUnwrapAnimation = true;
 
-        const animationKey = `whisperwrap:unwrap-animation:${this.token}`;
+        const animationKey =
+          `whisperwrap:unwrap-animation:${this.token}`;
+
         sessionStorage.setItem(animationKey, 'true');
 
         setTimeout(() => {
           this.showUnwrapAnimation = false;
           this.accepted = true;
-        }, 1800);
+        }, 3800);
       },
+
       error: e => {
-        this.error = e.message;
+        this.error =
+          e instanceof Error
+            ? e.message
+            : 'Unable to unwrap this WhisperWrap.';
+
         this.isAccepting = false;
         this.showUnwrapAnimation = false;
       },
     });
-  }
-
+}
   markListened() {
     if (this.listenedTracked) return;
 
