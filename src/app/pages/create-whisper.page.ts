@@ -455,10 +455,10 @@ export class CreateWhisperPage {
       }
 
       this.service.setDraft({
-        ...payload,
         ...generated,
+        ...payload,
         senderId: user.uid,
-        senderName: user.displayName ?? '',
+        senderName: user.displayName ?? senderName,
         status: 'generated',
       });
 
