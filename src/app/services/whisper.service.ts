@@ -118,8 +118,12 @@ async saveDraftToFirestore(draft: WhisperRecord) {
     shortPrayer: draft.shortPrayer,
   };
 
+  const wrapStyle = this.normalizeWrapStyle(draft.wrapStyle);
+
   const payload = {
     ...draft,
+    wrapStyle,
+    wrap_style: wrapStyle,
     generatedContent,
 
     // backend expects this
@@ -229,7 +233,9 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
       'legacy',
     ];
 
-    return allowedStyles.includes(style as WrapStyle) ? (style as WrapStyle) : 'gentle';
+    const normalizedStyle = typeof style === 'string' ? style.trim().toLowerCase() : style;
+
+    return allowedStyles.includes(normalizedStyle as WrapStyle) ? (normalizedStyle as WrapStyle) : 'gentle';
   }
 
   private handleError(error: unknown): Observable<never> {
