@@ -45,7 +45,7 @@ import {
 
         <ion-card class="form-card legal-card">
           <ion-card-content>
-            <p class="legal-updated">Last updated: July 7, 2026</p>
+            <p class="legal-updated">Last updated: July 29, 2026</p>
 
             <section>
               <h2>Acceptance of terms</h2>
@@ -58,9 +58,11 @@ import {
             <section>
               <h2>Consent-first use</h2>
               <p>
-                You are responsible for ensuring every WhisperWrap is respectful, lawful, and appropriate for
-                the recipient. Do not use WhisperWrap to harass, threaten, mislead, impersonate, or share
-                private information without permission.
+                You may only send Whispers to recipients with whom you have an existing personal relationship
+                or who have agreed to receive SMS communications from you. You are responsible for ensuring
+                every WhisperWrap is respectful, lawful, and appropriate for the recipient. Sending
+                unsolicited or spam messages is prohibited. Do not use WhisperWrap to harass, threaten,
+                mislead, impersonate, or share private information without permission.
               </p>
             </section>
 

@@ -6,6 +6,7 @@ import {
   IonButton,
   IonCard,
   IonCardContent,
+  IonCheckbox,
   IonContent,
   IonHeader,
   IonInput,
@@ -46,6 +47,7 @@ import { WhisperService } from '../services/whisper.service';
     IonItem,
     IonCard,
     IonCardContent,
+    IonCheckbox,
     IonSelect,
     IonSelectOption,
     IonTextarea,
@@ -151,6 +153,28 @@ import { WhisperService } from '../services/whisper.service';
     .preview-romantic { --wrap-primary: #be185d; --wrap-secondary: #f43f5e; --wrap-accent: #fecdd3; --wrap-ribbon: #ffe4e6; }
     .preview-encouragement { --wrap-primary: #2563eb; --wrap-secondary: #38bdf8; --wrap-accent: #fde047; --wrap-ribbon: #fef08a; }
     .preview-legacy { --wrap-primary: #0f172a; --wrap-secondary: #1d4ed8; --wrap-accent: #d97706; --wrap-ribbon: #fcd34d; }
+
+    .sms-consent {
+      background: #fff7ef;
+      border: 1px solid #ead9ca;
+      border-radius: 18px;
+      margin: 1.25rem 0 0.5rem;
+      padding: 1rem;
+    }
+
+    .sms-consent ion-checkbox {
+      --checkbox-background-checked: var(--ion-color-primary);
+      align-items: flex-start;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .sms-disclosure {
+      color: var(--ww-muted);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      margin: 0.75rem 0 0 2.25rem;
+    }
   `],
   template: `
     <ion-header>
@@ -237,6 +261,25 @@ import { WhisperService } from '../services/whisper.service';
                 {{ messageFor('recipientPhone') }}
               </ion-text>
 
+              <section class="sms-consent" aria-labelledby="sms-consent-label">
+                <ion-checkbox formControlName="smsConsent" labelPlacement="end">
+                  <span id="sms-consent-label">
+                    I confirm that this recipient is someone I personally know, has agreed to receive SMS
+                    messages from me or has an existing personal relationship with me. I authorize
+                    WhisperWrap to send one SMS requesting the recipient's permission before any Whisper is
+                    delivered.
+                  </span>
+                </ion-checkbox>
+                <p class="sms-disclosure">
+                  WhisperWrap will send one SMS asking the recipient whether they would like to receive your
+                  Whisper. No Whisper content or reminder messages will be sent unless the recipient replies
+                  YES. Message and data rates may apply. Reply STOP to opt out or HELP for assistance.
+                </p>
+              </section>
+              <ion-text class="error-text" *ngIf="messageFor('smsConsent')">
+                You must confirm the recipient relationship and SMS permission before continuing.
+              </ion-text>
+
               <ion-item>
                 <ion-select
                   label="Whisper type"
@@ -307,7 +350,7 @@ import { WhisperService } from '../services/whisper.service';
               <ion-button
                 expand="block"
                 type="button"
-                [disabled]="isGenerating"
+                [disabled]="isGenerating || !form.controls.smsConsent.value"
                 (click)="generate()"
               >
                 {{ isGenerating ? 'Drafting...' : 'Generate with AI' }}
@@ -360,6 +403,7 @@ export class CreateWhisperPage {
     recipientGender: [null as RecipientGender | null, Validators.required],
     recipientEmail: ['', [Validators.required, Validators.email]],
     recipientPhone: ['', [Validators.required, Validators.minLength(7)]],
+    smsConsent: [false, Validators.requiredTrue],
     whisperType: ['congratulations' as WhisperType, Validators.required],
     wrapStyle: ['gentle' as WrapStyle, Validators.required],
     deliveryFormat: ['text' as DeliveryFormat, Validators.required],

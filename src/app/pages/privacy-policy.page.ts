@@ -45,7 +45,7 @@ import {
 
         <ion-card class="form-card legal-card">
           <ion-card-content>
-            <p class="legal-updated">Last updated: July 7, 2026</p>
+            <p class="legal-updated">Last updated: July 29, 2026</p>
 
             <section>
               <h2>Information we collect</h2>
@@ -71,6 +71,17 @@ import {
                 WhisperWrap is designed for consent-first sharing. Recipients should only receive and unwrap
                 messages in ways that respect their choice, safety, and boundaries. Avoid storing sensitive
                 information that you do not have permission to share.
+              </p>
+            </section>
+
+            <section>
+              <h2>SMS Messaging</h2>
+              <p>
+                WhisperWrap uses SMS solely to facilitate private communication between individuals who know
+                one another. We do not send marketing or promotional text messages. Recipients receive one
+                consent request before any Whisper is delivered. If the recipient does not consent, no
+                Whisper content, reminders, or further SMS messages are sent. Message and data rates may
+                apply. Recipients can reply STOP to opt out or HELP for assistance.
               </p>
             </section>
 
