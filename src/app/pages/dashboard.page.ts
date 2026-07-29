@@ -150,6 +150,7 @@ import { UserProfile, WhisperRecord } from '../services/models';
             <nav class="legal-link-list" aria-label="Legal pages">
               <a routerLink="/privacy-policy">Privacy Policy</a>
               <a routerLink="/terms-and-conditions">Terms & Conditions</a>
+              <a routerLink="/help">SMS Help & FAQ</a>
             </nav>
           </ion-card-content>
         </ion-card>

@@ -40,6 +40,12 @@ export const appRoutes: Routes = [
   },
 
   {
+    path: 'help',
+    loadComponent: () =>
+      import('./pages/help.page').then(m => m.HelpPage),
+  },
+
+  {
     path: 'create-whisper',
     canActivate: [authGuard],
     loadComponent: () =>
