@@ -1,7 +1,7 @@
 import { NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   IonButton,
   IonCard,
@@ -38,6 +38,7 @@ import { WhisperService } from '../services/whisper.service';
     NgFor,
     NgIf,
     ReactiveFormsModule,
+    RouterLink,
     IonContent,
     IonHeader,
     IonTitle,
@@ -175,6 +176,18 @@ import { WhisperService } from '../services/whisper.service';
       line-height: 1.55;
       margin: 0.75rem 0 0 2.25rem;
     }
+
+    .sms-confirmations {
+      color: var(--ww-ink);
+      line-height: 1.55;
+      margin: 0.65rem 0 0 2.25rem;
+      padding-left: 1.1rem;
+    }
+
+    .sms-disclosure a {
+      color: var(--ion-color-primary);
+      font-weight: 700;
+    }
   `],
   template: `
     <ion-header>
@@ -264,16 +277,22 @@ import { WhisperService } from '../services/whisper.service';
               <section class="sms-consent" aria-labelledby="sms-consent-label">
                 <ion-checkbox formControlName="smsConsent" labelPlacement="end">
                   <span id="sms-consent-label">
-                    I confirm that this recipient is someone I personally know, has agreed to receive SMS
-                    messages from me or has an existing personal relationship with me. I authorize
-                    WhisperWrap to send one SMS requesting the recipient's permission before any Whisper is
-                    delivered.
+                    <strong>I confirm that:</strong>
                   </span>
                 </ion-checkbox>
+                <ul class="sms-confirmations">
+                  <li>I personally know this recipient.</li>
+                  <li>I have permission to contact them.</li>
+                  <li>They have agreed to receive my private Whisper invitation by SMS.</li>
+                  <li>WhisperWrap will send a consent request before delivering my Whisper.</li>
+                </ul>
                 <p class="sms-disclosure">
-                  WhisperWrap will send one SMS asking the recipient whether they would like to receive your
-                  Whisper. No Whisper content or reminder messages will be sent unless the recipient replies
-                  YES. Message and data rates may apply. Reply STOP to opt out or HELP for assistance.
+                  By checking this box and later clicking Confirm &amp; Send Consent, I authorize WhisperWrap
+                  to send this SMS. Message frequency varies, but recipients receive one initial consent
+                  request and no Whisper content unless they reply YES. Message and data rates may apply.
+                  Reply STOP to cancel or HELP for assistance. Consent is not a condition of purchase. See our
+                  <a routerLink="/terms">Terms &amp; Conditions</a> and
+                  <a routerLink="/privacy">Privacy Policy</a>.
                 </p>
               </section>
               <ion-text class="error-text" *ngIf="messageFor('smsConsent')">

@@ -45,14 +45,23 @@ import {
 
         <ion-card class="form-card legal-card">
           <ion-card-content>
-            <p class="legal-updated">Last updated: July 29, 2026</p>
+            <p class="legal-updated">Last updated: August 7, 2026</p>
+
+            <section>
+              <h2>Who we are</h2>
+              <p>
+                WhisperWrap operates a private, consent-first person-to-person messaging service. This
+                Privacy Policy applies to the WhisperWrap website, application, and SMS program.
+              </p>
+            </section>
 
             <section>
               <h2>Information we collect</h2>
               <p>
                 We collect account information such as your name, email address, authentication provider,
                 subscription status, and the WhisperWrap details you choose to save, including recipient
-                names, delivery preferences, message drafts, and review status.
+                names, email addresses, phone numbers, delivery preferences, message drafts, consent and
+                opt-out records, and review status.
               </p>
             </section>
 
@@ -77,37 +86,42 @@ import {
             <section>
               <h2>SMS Messaging</h2>
               <p>
-                WhisperWrap uses SMS solely to facilitate private communication between individuals who know
-                one another. We do not send marketing or promotional text messages. Recipients receive one
-                consent request before any Whisper is delivered. If the recipient does not consent, no
-                Whisper content, reminders, or further SMS messages are sent. Message and data rates may
-                apply. Recipients can reply STOP to opt out or HELP for assistance.
+                WhisperWrap collects recipient phone numbers solely to deliver private Whisper invitations
+                and consent messages requested by registered users. Phone numbers and SMS consent records are
+                never sold, rented, or shared with third parties or affiliates for marketing or promotional
+                purposes. Recipients receive one initial consent request before any Whisper is delivered. If
+                the recipient does not consent, no Whisper content is sent. Message frequency varies. Message
+                and data rates may apply. Recipients can reply STOP to cancel or HELP for assistance.
               </p>
             </section>
 
             <section>
               <h2>Sharing and service providers</h2>
               <p>
-                We do not sell your personal information. We may share limited data with trusted service
-                providers that help us operate authentication, hosting, storage, analytics, payments, support,
-                security, or legal compliance.
+                We do not sell your personal information. We disclose only the data needed to service
+                providers acting on our behalf, including Twilio for SMS delivery and Firebase for
+                authentication, hosting, and storage. Providers may use this data only to perform services for
+                WhisperWrap or meet legal obligations. SMS opt-in data and consent are not shared with third
+                parties for their own marketing purposes.
               </p>
             </section>
 
             <section>
-              <h2>Your choices</h2>
+              <h2>Data retention and your choices</h2>
               <p>
-                You can update the information in your account, delete drafts you no longer need, or contact
-                support to request account assistance. Some records may be retained where required for
-                security, fraud prevention, legal obligations, or backup integrity.
+                We retain account and message information only as long as needed to provide the service.
+                Consent and opt-out records may be kept as necessary to honor messaging preferences,
+                demonstrate compliance, prevent abuse, and meet legal obligations. You can update account
+                information, delete drafts, or email us to request access, correction, or deletion. We may
+                retain limited records where required for security, legal obligations, or backup integrity.
               </p>
             </section>
 
             <section>
               <h2>Contact</h2>
               <p>
-                If you have privacy questions, contact the WhisperWrap team through the support channel
-                provided in the app or on the WhisperWrap website.
+                For privacy questions or requests, email the WhisperWrap team at
+                <a href="mailto:support@whisperwrapapp.org">support&#64;whisperwrapapp.org</a>.
               </p>
             </section>
           </ion-card-content>
