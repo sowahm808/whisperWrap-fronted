@@ -28,15 +28,33 @@ export const appRoutes: Routes = [
   },
 
   {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./pages/privacy-policy.page').then(m => m.PrivacyPolicyPage),
+  },
+
+  {
     path: 'privacy-policy',
     loadComponent: () =>
       import('./pages/privacy-policy.page').then(m => m.PrivacyPolicyPage),
   },
 
   {
+    path: 'terms',
+    loadComponent: () =>
+      import('./pages/terms-and-conditions.page').then(m => m.TermsAndConditionsPage),
+  },
+
+  {
     path: 'terms-and-conditions',
     loadComponent: () =>
       import('./pages/terms-and-conditions.page').then(m => m.TermsAndConditionsPage),
+  },
+
+  {
+    path: 'sms-consent',
+    loadComponent: () =>
+      import('./pages/sms-consent.page').then(m => m.SmsConsentPage),
   },
 
   {

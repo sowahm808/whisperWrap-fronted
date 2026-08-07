@@ -45,7 +45,16 @@ import {
 
         <ion-card class="form-card legal-card">
           <ion-card-content>
-            <p class="legal-updated">Last updated: July 29, 2026</p>
+            <p class="legal-updated">Last updated: August 7, 2026</p>
+
+            <section>
+              <h2>About the service</h2>
+              <p>
+                WhisperWrap provides a private, consent-first person-to-person messaging service. Registered
+                users can create a private message for someone they know, and WhisperWrap first asks that
+                recipient by SMS whether they agree to receive it.
+              </p>
+            </section>
 
             <section>
               <h2>Acceptance of terms</h2>
@@ -63,6 +72,17 @@ import {
                 every WhisperWrap is respectful, lawful, and appropriate for the recipient. Sending
                 unsolicited or spam messages is prohibited. Do not use WhisperWrap to harass, threaten,
                 mislead, impersonate, or share private information without permission.
+              </p>
+            </section>
+
+            <section>
+              <h2>SMS terms</h2>
+              <p>
+                By submitting a recipient's phone number and checking the SMS confirmation, you confirm that
+                you personally know the recipient, have permission to contact them, and that they agreed to
+                receive a private Whisper invitation. You authorize WhisperWrap to send the consent request.
+                Message frequency varies. Message and data rates may apply. Recipients may reply STOP to
+                cancel or HELP for assistance. Consent is not a condition of purchase.
               </p>
             </section>
 
@@ -97,6 +117,14 @@ import {
               <p>
                 WhisperWrap is provided as-is to the fullest extent permitted by law. We are not liable for
                 indirect, incidental, or consequential damages arising from your use of the service.
+              </p>
+            </section>
+
+            <section>
+              <h2>Contact</h2>
+              <p>
+                Questions about these terms may be sent to
+                <a href="mailto:support@whisperwrapapp.org">support&#64;whisperwrapapp.org</a>.
               </p>
             </section>
           </ion-card-content>

@@ -440,6 +440,40 @@ audio {
   margin: 0;
 }
 
+.legal-card a {
+  color: var(--ion-color-primary);
+  font-weight: 700;
+}
+
+.cta-example {
+  align-items: flex-start;
+  background: #fff7ef;
+  border: 1px solid #ead9ca;
+  border-radius: 18px;
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.cta-example p,
+.cta-example ul {
+  margin-top: 0.65rem;
+}
+
+.checkbox-example {
+  color: var(--ion-color-primary);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.legal-inline-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem !important;
+}
+
 .legal-card ol {
   color: var(--ww-muted);
   line-height: 1.7;
