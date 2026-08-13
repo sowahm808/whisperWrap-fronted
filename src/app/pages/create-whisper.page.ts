@@ -6,7 +6,6 @@ import {
   IonButton,
   IonCard,
   IonCardContent,
-  IonCheckbox,
   IonContent,
   IonHeader,
   IonInput,
@@ -48,8 +47,7 @@ import { WhisperService } from '../services/whisper.service';
     IonItem,
     IonCard,
     IonCardContent,
-    IonCheckbox,
-    IonSelect,
+      IonSelect,
     IonSelectOption,
     IonTextarea,
     IonText,
@@ -155,39 +153,6 @@ import { WhisperService } from '../services/whisper.service';
     .preview-encouragement { --wrap-primary: #2563eb; --wrap-secondary: #38bdf8; --wrap-accent: #fde047; --wrap-ribbon: #fef08a; }
     .preview-legacy { --wrap-primary: #0f172a; --wrap-secondary: #1d4ed8; --wrap-accent: #d97706; --wrap-ribbon: #fcd34d; }
 
-    .sms-consent {
-      background: #fff7ef;
-      border: 1px solid #ead9ca;
-      border-radius: 18px;
-      margin: 1.25rem 0 0.5rem;
-      padding: 1rem;
-    }
-
-    .sms-consent ion-checkbox {
-      --checkbox-background-checked: var(--ion-color-primary);
-      align-items: flex-start;
-      font-weight: 700;
-      line-height: 1.5;
-    }
-
-    .sms-disclosure {
-      color: var(--ww-muted);
-      font-size: 0.85rem;
-      line-height: 1.55;
-      margin: 0.75rem 0 0 2.25rem;
-    }
-
-    .sms-confirmations {
-      color: var(--ww-ink);
-      line-height: 1.55;
-      margin: 0.65rem 0 0 2.25rem;
-      padding-left: 1.1rem;
-    }
-
-    .sms-disclosure a {
-      color: var(--ion-color-primary);
-      font-weight: 700;
-    }
   `],
   template: `
     <ion-header>
@@ -274,31 +239,6 @@ import { WhisperService } from '../services/whisper.service';
                 {{ messageFor('recipientPhone') }}
               </ion-text>
 
-              <section class="sms-consent" aria-labelledby="sms-consent-label">
-                <ion-checkbox formControlName="smsConsent" labelPlacement="end">
-                  <span id="sms-consent-label">
-                    <strong>I confirm that:</strong>
-                  </span>
-                </ion-checkbox>
-                <ul class="sms-confirmations">
-                  <li>I personally know this recipient.</li>
-                  <li>I have permission to contact them.</li>
-                  <li>They have agreed to receive my private Whisper invitation by SMS.</li>
-                  <li>WhisperWrap will send a consent request before delivering my Whisper.</li>
-                </ul>
-                <p class="sms-disclosure">
-                  By checking this box and later clicking Confirm &amp; Send Consent, I authorize WhisperWrap
-                  to send this SMS. Message frequency varies, but recipients receive one initial consent
-                  request and no Whisper content unless they reply YES. Message and data rates may apply.
-                  Reply STOP to cancel or HELP for assistance. Consent is not a condition of purchase. See our
-                  <a routerLink="/terms">Terms &amp; Conditions</a> and
-                  <a routerLink="/privacy">Privacy Policy</a>.
-                </p>
-              </section>
-              <ion-text class="error-text" *ngIf="messageFor('smsConsent')">
-                You must confirm the recipient relationship and SMS permission before continuing.
-              </ion-text>
-
               <ion-item>
                 <ion-select
                   label="Whisper type"
@@ -369,7 +309,7 @@ import { WhisperService } from '../services/whisper.service';
               <ion-button
                 expand="block"
                 type="button"
-                [disabled]="isGenerating || !form.controls.smsConsent.value"
+                [disabled]="isGenerating || form.invalid"
                 (click)="generate()"
               >
                 {{ isGenerating ? 'Drafting...' : 'Generate with AI' }}
@@ -422,7 +362,6 @@ export class CreateWhisperPage {
     recipientGender: [null as RecipientGender | null, Validators.required],
     recipientEmail: ['', [Validators.required, Validators.email]],
     recipientPhone: ['', [Validators.required, Validators.minLength(7)]],
-    smsConsent: [false, Validators.requiredTrue],
     whisperType: ['congratulations' as WhisperType, Validators.required],
     wrapStyle: ['gentle' as WrapStyle, Validators.required],
     deliveryFormat: ['text' as DeliveryFormat, Validators.required],

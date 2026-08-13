@@ -89,8 +89,8 @@ import {
                 WhisperWrap collects recipient phone numbers solely to deliver private Whisper invitations
                 and consent messages requested by registered users. Phone numbers and SMS consent records are
                 never sold, rented, or shared with third parties or affiliates for marketing or promotional
-                purposes. Recipients receive one initial consent request before any Whisper is delivered. If
-                the recipient does not consent, no Whisper content is sent. Message frequency varies. Message
+                purposes. Recipients receive a secure consent link by email or from the sender. Only after the recipient
+                voluntarily submits SMS consent may a private Whisper notification be sent by text. Message frequency varies. Message
                 and data rates may apply. Recipients can reply STOP to cancel or HELP for assistance.
               </p>
             </section>

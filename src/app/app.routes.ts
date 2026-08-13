@@ -58,6 +58,12 @@ export const appRoutes: Routes = [
   },
 
   {
+    path: 'sms-consent/:token',
+    loadComponent: () =>
+      import('./pages/sms-consent-request.page').then(m => m.SmsConsentRequestPage),
+  },
+
+  {
     path: 'help',
     loadComponent: () =>
       import('./pages/help.page').then(m => m.HelpPage),

@@ -8,54 +8,59 @@ import { WhisperService } from '../services/whisper.service';
 @Component({
   standalone: true,
   imports: [NgIf, IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonCard, IonCardContent],
+  styles: [`
+    .share-panel { background:#fff7ef; border:1px solid #ead9ca; border-radius:18px; margin:1rem 0; padding:1rem; }
+    .share-panel h2 { margin-top:0; }
+    .share-actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .share-actions ion-button { flex:1 1 12rem; }
+  `],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Whisper Sent</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content>
-      <main class="page-shell">
-        <section class="hero-copy">
-          <p class="eyebrow">Step 3 of 3</p>
-          <h1>Whisper sent.</h1>
-          <p class="muted">The recipient receives a secure consent link before any message content is revealed.</p>
+    <ion-header><ion-toolbar><ion-title>Consent Invitation Ready</ion-title></ion-toolbar></ion-header>
+    <ion-content><main class="page-shell">
+      <section class="hero-copy"><p class="eyebrow">Step 3 of 3</p><h1>Invitation ready.</h1>
+        <p class="muted">No SMS is sent until the recipient personally records consent.</p></section>
+      <ol class="progress-steps" aria-label="WhisperWrap progress"><li>Create</li><li>Review</li><li class="active">Invite</li></ol>
+      <ion-card class="form-card success-card"><ion-card-content aria-live="polite">
+        <section *ngIf="service.draft?.consentChannels?.email">
+          <h2>Consent invitation sent by email.</h2>
+          <p>The recipient must personally approve SMS before WhisperWrap can send a text message.</p>
         </section>
-
-        <ol class="progress-steps" aria-label="WhisperWrap progress">
-          <li>Create</li>
-          <li>Review</li>
-          <li class="active">Sent</li>
-        </ol>
-
-        <ion-card class="form-card success-card">
-          <ion-card-content>
-            <h2>Consent email sent.</h2>
-            <p>The recipient can accept the secure unwrap link before reading or listening.</p>
-            <p *ngIf="service.draft?.unwrapLink" class="muted">Unwrap link: {{ service.draft?.unwrapLink }}</p>
-            <ion-button expand="block" (click)="navigateToDashboard()">Back to Dashboard</ion-button>
-            <ion-button expand="block" fill="clear" (click)="navigateToCreateWhisper()">Create Another</ion-button>
-          </ion-card-content>
-        </ion-card>
-      </main>
-    </ion-content>
-  `,
+        <section class="share-panel" *ngIf="service.draft?.consentChannels?.manual && service.draft?.consentLink as link">
+          <h2>Share consent link</h2>
+          <p>The recipient must open this secure link and personally consent before WhisperWrap can send an SMS.</p>
+          <div class="share-actions">
+            <ion-button type="button" (click)="copy(link)">Copy Link</ion-button>
+            <ion-button *ngIf="canShare" type="button" fill="outline" (click)="share(link)">Share Link</ion-button>
+          </div>
+          <p class="success-text" *ngIf="copyNotice">Consent link copied.</p>
+        </section>
+        <p *ngIf="!service.draft?.consentChannels?.email && !service.draft?.consentChannels?.manual" class="muted">
+          The secure invitation was created. Return to the dashboard to check its delivery status.
+        </p>
+        <ion-button expand="block" (click)="navigateToDashboard()">Back to Dashboard</ion-button>
+        <ion-button expand="block" fill="clear" (click)="navigateToCreateWhisper()">Create Another</ion-button>
+      </ion-card-content></ion-card>
+    </main></ion-content>`,
 })
 export class WhisperSentPage {
-  constructor(
-    public service: WhisperService,
-    private router: Router,
-    private focus: FocusService,
-  ) {}
+  copyNotice = false;
+  readonly canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+  constructor(public service: WhisperService, private router: Router, private focus: FocusService) {}
 
-  navigateToDashboard() {
-    this.focus.clearActiveElement();
-    this.router.navigateByUrl('/dashboard');
+  async copy(link: string): Promise<void> {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(link);
+    else {
+      const input = document.createElement('textarea'); input.value = link; input.style.position = 'fixed'; input.style.opacity = '0';
+      document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove();
+    }
+    this.copyNotice = true;
   }
 
-  navigateToCreateWhisper() {
-    this.focus.clearActiveElement();
-    this.router.navigateByUrl('/create-whisper');
+  async share(link: string): Promise<void> {
+    if (this.canShare) await navigator.share({ title: 'WhisperWrap consent invitation', url: link });
+    else await this.copy(link);
   }
+
+  navigateToDashboard(): void { this.focus.clearActiveElement(); void this.router.navigateByUrl('/dashboard'); }
+  navigateToCreateWhisper(): void { this.focus.clearActiveElement(); void this.router.navigateByUrl('/create-whisper'); }
 }
