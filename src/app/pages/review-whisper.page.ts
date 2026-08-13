@@ -52,7 +52,7 @@ import { WhisperService } from '../services/whisper.service';
           <p class="eyebrow">Step 2 of 3</p>
           <h1>Review every word.</h1>
           <p class="muted">
-            Edit the draft, add audio if needed, then send consent by email or text.
+            Edit the draft, add audio if needed, then create a secure consent invitation for the recipient.
           </p>
         </section>
 
@@ -164,7 +164,7 @@ import { WhisperService } from '../services/whisper.service';
               (click)="send()"
               [disabled]="isBusy"
             >
-              {{ isSending ? 'Sending consent...' : 'Confirm & Send Consent' }}
+              {{ isSending ? 'Creating invitation...' : 'Create Recipient Consent Invitation' }}
             </ion-button>
           </ion-card-content>
         </ion-card>
@@ -402,7 +402,8 @@ export class ReviewWhisperPage {
         ...draftToSave,
         id: whisperId,
         status: 'consent_sent',
-        unwrapLink: response.unwrapLink,
+        consentLink: response.consentLink,
+        consentChannels: response.channels,
       });
 
       this.focus.clearActiveElement();

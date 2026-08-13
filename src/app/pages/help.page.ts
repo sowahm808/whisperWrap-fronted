@@ -47,16 +47,11 @@ import {
             <section>
               <h2>How does SMS work?</h2>
               <ol>
-                <li>The sender creates a Whisper.</li>
-                <li>The sender confirms the recipient is someone they know or who has agreed to receive SMS.</li>
-                <li>WhisperWrap sends one SMS requesting the recipient's permission.</li>
-                <li>The recipient replies YES.</li>
-                <li>Only then is the Whisper delivered.</li>
+                <li>A sender creates a private Whisper and WhisperWrap creates a secure consent link.</li>
+                <li>The recipient opens the link, enters their mobile number, and checks the unchecked consent box.</li>
+                <li>Only after the backend records consent may WhisperWrap send the private Whisper notification by SMS.</li>
               </ol>
-              <p>
-                If the recipient does not reply YES, WhisperWrap does not send the Whisper content or reminder
-                messages. Message and data rates may apply. Reply STOP to opt out or HELP for assistance.
-              </p>
+              <p>Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for assistance.</p>
             </section>
           </ion-card-content>
         </ion-card>

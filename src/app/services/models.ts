@@ -112,8 +112,9 @@ export interface WhisperRecord extends WhisperInput, GeneratedWhisper {
 
   consentChannels?: {
     email: boolean;
-    sms: boolean;
+    manual: boolean;
   };
+  consentLink?: string;
 
   /**
    * Firestore timestamps
@@ -127,14 +128,36 @@ export interface ConsentResponse {
 
   whisperId?: string;
 
-  unwrapLink?: string;
+  consentLink: string;
 
   status?: WhisperStatus;
 
   channels?: {
     email: boolean;
-    sms: boolean;
+    manual: boolean;
   };
+}
+
+export interface SmsConsentRequest {
+  valid: boolean;
+  recipientName?: string;
+  senderName?: string;
+  maskedPhone?: string;
+  alreadyConsented: boolean;
+  expired?: boolean;
+}
+
+export interface SmsConsentSubmission {
+  phoneNumber: string;
+  smsConsent: true;
+  disclosureVersion: string;
+  termsVersion: string;
+  privacyVersion: string;
+}
+
+export interface SmsConsentResponse {
+  success: boolean;
+  alreadyProcessed?: boolean;
 }
 
 export interface RecipientEvent {
