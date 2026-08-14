@@ -5,7 +5,16 @@ import { Storage, getDownloadURL, ref, uploadBytes } from '@angular/fire/storage
 import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-import { ConsentResponse, GeneratedWhisper, WhisperInput, WhisperRecord, WrapStyle } from './models';
+import {
+  ConsentResponse,
+  GeneratedWhisper,
+  SmsConsentLookupResponse,
+  SmsConsentSubmission,
+  SmsConsentSubmissionResponse,
+  WhisperInput,
+  WhisperRecord,
+  WrapStyle,
+} from './models';
 const DRAFT_KEY = 'whisperwrap:draft';
 
 @Injectable({ providedIn: 'root' })
@@ -26,37 +35,31 @@ export class WhisperService {
   }
 
  
-sendConsent(whisperId: string) {
-  return this.withAuthHeaders(true).pipe(
-    switchMap(headers =>
-      this.http.post<ConsentResponse>(
+  sendConsent(whisperId: string) {
+    return this.withAuthHeaders(true).pipe(
+      switchMap(headers => this.http.post<ConsentResponse>(
         `${this.base}/send-consent`,
         { whisperId },
         { headers },
-      ),
-    ),
-    catchError(error => this.handleError(error)),
-  );
-}
- 
+      )),
+      catchError(error => this.handleError(error)),
+    );
+  }
 
-// getUnwrap(token: string) {
-//   return this.http.get<any>(`${this.base}/unwrap/${encodeURIComponent(token)}`).pipe(
-//     map(response => this.normalizeUnwrapResponse(response, 'opened')),
-//     catchError(error => this.handleError(error)),
-//   );
-// }
+  getSmsConsent(token: string) {
+    return this.http
+      .get<SmsConsentLookupResponse>(`${this.base}/sms-consent/${encodeURIComponent(token)}`)
+      .pipe(catchError(error => this.handlePublicConsentError(error)));
+  }
 
- 
-
-// acceptUnwrap(token: string) {
-//   return this.http
-//     .post<any>(`${this.base}/unwrap/${encodeURIComponent(token)}/accept`, {})
-//     .pipe(
-//       map(response => this.normalizeUnwrapResponse(response, 'accepted')),
-//       catchError(error => this.handleError(error)),
-//     );
-// }
+  submitSmsConsent(token: string, payload: SmsConsentSubmission) {
+    return this.http
+      .post<SmsConsentSubmissionResponse>(
+        `${this.base}/sms-consent/${encodeURIComponent(token)}`,
+        payload,
+      )
+      .pipe(catchError(error => this.handlePublicConsentError(error)));
+  }
 
 getUnwrap(token: string) {
   return this.http
@@ -236,13 +239,11 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
 
       return from(user.getIdToken(forceRefresh));
     }),
-    switchMap(token =>
-      from([
-        new HttpHeaders({
+    map(token =>
+      new HttpHeaders({
           Authorization: `Bearer ${token}`,
           'X-Firebase-ID-Token': token,
-        }),
-      ]),
+      }),
     ),
   );
 }
@@ -255,34 +256,6 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
       return undefined;
     }
   }
-
-  // private normalizeUnwrapResponse(response: any, defaultStatus: WhisperRecord['status']): WhisperRecord {
-  //   const source = response?.whisper ?? response?.record ?? response ?? {};
-  //   const generatedContent = source.generatedContent ?? response?.generatedContent ?? {};
-
-  //   return this.normalizeRecord({
-  //     ...source,
-  //     ...generatedContent,
-  //     wrapStyle: this.normalizeWrapStyle(
-  //       source.wrapStyle ??
-  //         source.wrap_style ??
-  //         source.style ??
-  //         response?.wrapStyle ??
-  //         response?.wrap_style ??
-  //         response?.style,
-  //     ),
-  //     audioUrl: source.audioUrl ?? response?.audioUrl ?? null,
-  //     status: source.status ?? response?.status ?? defaultStatus,
-  //   } as WhisperRecord);
-  // }
-
-  // private normalizeRecord(record: WhisperRecord): WhisperRecord {
-  //   return {
-  //     ...record,
-  //     wrapStyle: this.normalizeWrapStyle(record.wrapStyle),
-  //     recipientAddressName: record.recipientAddressName?.trim() || record.recipientName || 'Recipient',
-  //   };
-  // }
 
   private normalizeWrapStyle(style: unknown): WrapStyle {
     const allowedStyles: WrapStyle[] = [
@@ -327,5 +300,26 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
     }
 
     return throwError(() => new Error('Something went wrong. Please try again.'));
+  }
+
+  private handlePublicConsentError(error: unknown): Observable<never> {
+    if (error instanceof HttpErrorResponse) {
+      const code = typeof error.error?.error === 'string'
+        ? error.error.error
+        : typeof error.error?.code === 'string' ? error.error.code : '';
+
+      const messages: Record<string, string> = {
+        invalid_or_expired_consent_link: 'This consent link is invalid or has expired.',
+        expired_consent_link: 'This consent link is invalid or has expired.',
+        recipient_phone_mismatch: 'The phone number does not match the intended recipient.',
+        sms_recipient_suppressed: 'SMS notifications are currently disabled for this phone number.',
+      };
+
+      if (messages[code]) {
+        return throwError(() => new Error(messages[code]));
+      }
+    }
+
+    return this.handleError(error);
   }
 }

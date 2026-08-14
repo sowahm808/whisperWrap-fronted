@@ -27,7 +27,7 @@ import { WhisperService } from '../services/whisper.service';
         </section>
         <section class="share-panel" *ngIf="service.draft?.consentChannels?.manual && service.draft?.consentLink as link">
           <h2>Share consent link</h2>
-          <p>The recipient must open this secure link and personally consent before WhisperWrap can send an SMS.</p>
+          <p>A secure consent link has been generated. Share it with the recipient through a non-SMS channel.</p>
           <div class="share-actions">
             <ion-button type="button" (click)="copy(link)">Copy Link</ion-button>
             <ion-button *ngIf="canShare" type="button" fill="outline" (click)="share(link)">Share Link</ion-button>

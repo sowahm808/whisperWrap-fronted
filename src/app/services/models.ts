@@ -124,40 +124,38 @@ export interface WhisperRecord extends WhisperInput, GeneratedWhisper {
 }
 
 export interface ConsentResponse {
-  success?: boolean;
-
-  whisperId?: string;
-
+  success: boolean;
   consentLink: string;
-
-  status?: WhisperStatus;
-
-  channels?: {
+  channels: {
     email: boolean;
     manual: boolean;
   };
 }
 
-export interface SmsConsentRequest {
+export interface SmsConsentLookupResponse {
   valid: boolean;
-  recipientName?: string;
-  senderName?: string;
-  maskedPhone?: string;
+  recipientName: string;
+  senderName: string;
+  maskedPhone: string | null;
   alreadyConsented: boolean;
-  expired?: boolean;
+  disclosureVersion?: string;
+  disclosureText?: string;
+  privacyVersion?: string;
+  termsVersion?: string;
 }
 
 export interface SmsConsentSubmission {
   phoneNumber: string;
-  smsConsent: true;
-  disclosureVersion: string;
-  termsVersion: string;
-  privacyVersion: string;
+  smsConsent: boolean;
 }
 
-export interface SmsConsentResponse {
+export interface SmsConsentSubmissionResponse {
   success: boolean;
   alreadyProcessed?: boolean;
+  smsSent?: boolean;
+  smsStatus?: string;
+  unwrapToken?: string;
+  unwrapUrl?: string;
 }
 
 export interface RecipientEvent {
