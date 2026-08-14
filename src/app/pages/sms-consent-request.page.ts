@@ -8,11 +8,10 @@ import {
 } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
 
-import { SmsConsentRequest, SmsConsentSubmission } from '../services/models';
-import { SmsConsentApiError, SmsConsentService } from '../services/sms-consent.service';
+import { SmsConsentLookupResponse } from '../services/models';
+import { WhisperService } from '../services/whisper.service';
 
-export type ConsentPageState = 'loading' | 'ready' | 'submitting' | 'success' | 'invalid' | 'expired' | 'error';
-const LEGAL_VERSION = '2026-08-13';
+export type ConsentPageState = 'loading' | 'ready' | 'submitting' | 'success' | 'already-consented' | 'error';
 
 @Component({
   standalone: true,
@@ -20,63 +19,65 @@ const LEGAL_VERSION = '2026-08-13';
     IonContent, IonHeader, IonInput, IonItem, IonSpinner, IonText, IonTitle, IonToolbar],
   styles: [`
     .consent-shell { width: min(100%, 680px); }
+    .brand { align-items: center; display: flex; gap: .8rem; justify-content: center; margin-bottom: 1rem; }
+    .brand img { border-radius: 50%; height: 3.5rem; width: 3.5rem; }
+    .brand strong { font-size: 1.35rem; }
     .status { text-align: center; padding: 2rem 1rem; }
     .status ion-spinner { display: block; margin: 0 auto 1rem; }
     .consent-choice { align-items: flex-start; background: #fff7ef; border: 1px solid #ead9ca;
       border-radius: 18px; display: flex; gap: .8rem; margin-top: 1rem; padding: 1rem; }
     .consent-choice ion-checkbox { flex: 0 0 auto; margin-top: .2rem; }
     .disclosure { line-height: 1.55; margin: 0; }
-    .disclosure strong { display: block; margin-bottom: .65rem; }
+    .optional-note { color: var(--ww-muted); font-weight: 650; }
     .legal-links { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
-    .legal-links a { color: var(--ion-color-primary); font-weight: 700; }
+    .legal-links a, .continue-link { color: var(--ion-color-primary); font-weight: 700; }
     .consent-choice:focus-within { outline: 3px solid rgba(var(--ion-color-primary-rgb), .2); outline-offset: 2px; }
   `],
   template: `
-    <ion-header><ion-toolbar><ion-title>SMS Consent</ion-title></ion-toolbar></ion-header>
+    <ion-header><ion-toolbar><ion-title>WhisperWrap Invitation</ion-title></ion-toolbar></ion-header>
     <ion-content>
       <main class="page-shell consent-shell">
-        <section class="hero-copy"><p class="eyebrow">Secure recipient invitation</p><h1>Choose how you receive your Whisper.</h1></section>
+        <div class="brand"><img src="assets/whisperWraplogo.png" alt=""><strong>WhisperWrap</strong></div>
+        <section class="hero-copy"><p class="eyebrow">Secure recipient invitation</p><h1>Continue to your Whisper.</h1>
+          <p class="muted">Review your optional SMS notification preference first.</p></section>
         <ion-card class="form-card"><ion-card-content aria-live="polite">
           <div class="status" *ngIf="state === 'loading' || state === 'submitting'">
             <ion-spinner aria-hidden="true"></ion-spinner>
-            <p>{{ state === 'loading' ? 'Checking your secure invitation…' : 'Saving your consent…' }}</p>
+            <p>{{ state === 'loading' ? 'Checking your secure invitation…' : 'Saving your preference…' }}</p>
           </div>
 
           <form *ngIf="state === 'ready'" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <h2>SMS consent</h2>
+            <h2>Hello{{ consent?.recipientName ? ', ' + consent?.recipientName : '' }}.</h2>
             <p>{{ invitationMessage }}</p>
+            <p *ngIf="consent?.maskedPhone">Notification number: <strong>{{ consent?.maskedPhone }}</strong></p>
+            <h3>SMS Notifications (Optional)</h3>
             <ion-item>
-              <ion-input label="Mobile phone number" labelPlacement="stacked" type="tel"
+              <ion-input label="Confirm or enter your mobile phone number" labelPlacement="stacked" type="tel"
                 autocomplete="tel" inputmode="tel" formControlName="phoneNumber"
                 placeholder="(214) 555-1234"></ion-input>
             </ion-item>
-            <ion-text class="error-text" *ngIf="form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid">
-              Enter a valid US mobile phone number.
-            </ion-text>
+            <ion-text class="error-text" *ngIf="phoneError">{{ phoneError }}</ion-text>
             <div class="consent-choice">
-              <ion-checkbox formControlName="smsConsent" aria-label="Agree to receive transactional SMS messages"></ion-checkbox>
-              <p class="disclosure">
-                <strong>I agree to receive transactional SMS messages from WhisperWrap relating to private Whispers sent to me.</strong>
-                Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for assistance.
-                Consent is voluntary and is not a condition of purchasing any goods or services.
-              </p>
+              <ion-checkbox formControlName="smsConsent" aria-label="Agree to receive optional SMS notifications"></ion-checkbox>
+              <p class="disclosure">I agree to receive SMS notifications from WhisperWrap regarding private Whisper messages sent to me.
+                Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help.</p>
             </div>
-            <ion-text class="error-text" *ngIf="form.controls.smsConsent.touched && form.controls.smsConsent.invalid">
-              Check the consent box to continue.
-            </ion-text>
+            <p class="optional-note">SMS consent is optional and is not required to receive or view a Whisper.</p>
             <p class="legal-links"><a routerLink="/privacy">Privacy Policy</a><a routerLink="/terms">Terms &amp; Conditions</a></p>
             <ion-text class="error-text" *ngIf="errorMessage">{{ errorMessage }}</ion-text>
-            <ion-button expand="block" type="submit" [disabled]="form.invalid || submitting">Agree and send my Whisper SMS</ion-button>
+            <ion-button expand="block" type="submit" [disabled]="submitting">Continue to Whisper</ion-button>
           </form>
 
-          <section class="status" *ngIf="state === 'success'">
-            <h2>{{ alreadyProcessed ? 'This consent request has already been completed.' : \"You're all set.\" }}</h2>
-            <ng-container *ngIf="!alreadyProcessed"><p>You agreed to receive this private Whisper by SMS.<br>Check your messages for the secure Whisper notification.</p>
-            <p>You can reply STOP at any time to opt out or HELP for assistance.</p></ng-container>
+          <section class="status" *ngIf="state === 'already-consented'">
+            <h2>Your SMS preference has already been recorded.</h2>
+            <p>You do not need to submit it again. Use your original Whisper invitation to continue.</p>
           </section>
-          <section class="status" *ngIf="state === 'invalid'"><h2>This consent link is invalid.</h2></section>
-          <section class="status" *ngIf="state === 'expired'"><h2>This consent link has expired.</h2><p>Ask the sender to create a new invitation.</p></section>
-          <section class="status" *ngIf="state === 'error'"><h2>We couldn't complete your request.</h2><p>{{ errorMessage }}</p></section>
+          <section class="status" *ngIf="state === 'success'">
+            <h2>Your preference has been saved.</h2>
+            <p>{{ submittedWithSms ? 'The backend will send an SMS notification when permitted.' : 'You declined SMS notifications. You can still receive and view your Whisper.' }}</p>
+            <a *ngIf="continueUrl" class="continue-link" [href]="continueUrl">Continue to Whisper</a>
+          </section>
+          <section class="status" *ngIf="state === 'error'"><h2>We couldn't open this invitation.</h2><p>{{ errorMessage }}</p></section>
         </ion-card-content></ion-card>
       </main>
     </ion-content>
@@ -85,73 +86,93 @@ const LEGAL_VERSION = '2026-08-13';
 export class SmsConsentRequestPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
-  private readonly service = inject(SmsConsentService);
+  private readonly service = inject(WhisperService);
   private token = '';
   state: ConsentPageState = 'loading';
-  request?: SmsConsentRequest;
+  consent?: SmsConsentLookupResponse;
   submitting = false;
-  alreadyProcessed = false;
+  submittedWithSms = false;
+  continueUrl = '';
   errorMessage = '';
+  phoneError = '';
   readonly form = this.fb.nonNullable.group({
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^\s*(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\s*$/)]],
-    smsConsent: [false, Validators.requiredTrue],
+    phoneNumber: ['', Validators.pattern(/^\s*(?:|(?:\+?[\d\s().-]{7,}))\s*$/)],
+    smsConsent: false,
   });
 
   get invitationMessage(): string {
-    return this.request?.senderName?.trim()
-      ? `${this.request.senderName.trim()} would like to send you a private Whisper.`
-      : 'Someone you know would like to send you a private Whisper.';
+    return this.consent?.senderName?.trim()
+      ? `${this.consent.senderName.trim()} sent you a private Whisper.`
+      : 'Someone you know sent you a private Whisper.';
   }
 
   async ngOnInit(): Promise<void> {
     this.token = this.route.snapshot.paramMap.get('token') ?? '';
-    if (!this.token) { this.state = 'invalid'; return; }
+    if (!this.token) {
+      this.showInvalidLink();
+      return;
+    }
+
     try {
-      this.request = await firstValueFrom(this.service.getConsentRequest(this.token));
-      if (this.request.alreadyConsented) { this.alreadyProcessed = true; this.state = 'success'; return; }
-      if (this.request.expired) { this.state = 'expired'; return; }
-      this.state = this.request.valid ? 'ready' : 'invalid';
-    } catch (error) { this.handleError(error, true); }
+      this.consent = await firstValueFrom(this.service.getSmsConsent(this.token));
+      if (!this.consent.valid) {
+        this.showInvalidLink();
+      } else if (this.consent.alreadyConsented) {
+        this.state = 'already-consented';
+      } else {
+        this.state = 'ready';
+      }
+    } catch (error) {
+      this.showError(error);
+    }
   }
 
   async submit(): Promise<void> {
-    if (this.submitting) return;
-    this.form.markAllAsTouched();
-    if (this.form.invalid) return;
+    if (this.submitting || this.state !== 'ready') return;
+    this.phoneError = '';
+    this.form.controls.phoneNumber.markAsTouched();
+    const phoneNumber = this.form.controls.phoneNumber.value.trim();
+    const smsConsent = this.form.controls.smsConsent.value;
+
+    if (this.form.controls.phoneNumber.invalid || (smsConsent && !phoneNumber)) {
+      this.phoneError = smsConsent
+        ? 'Enter the mobile phone number that received this invitation.'
+        : 'Check the phone number format or leave it blank.';
+      return;
+    }
+
     this.submitting = true;
     this.state = 'submitting';
-    const payload: SmsConsentSubmission = {
-      phoneNumber: this.normalizePhone(this.form.controls.phoneNumber.value), smsConsent: true,
-      disclosureVersion: LEGAL_VERSION, termsVersion: LEGAL_VERSION, privacyVersion: LEGAL_VERSION,
-    };
     try {
-      const response = await firstValueFrom(this.service.submitConsent(this.token, payload));
-      if (!response.success && !response.alreadyProcessed) throw new SmsConsentApiError('unknown');
-      this.alreadyProcessed = response.alreadyProcessed === true;
-      this.state = 'success';
+      const response = await firstValueFrom(this.service.submitSmsConsent(this.token, { phoneNumber, smsConsent }));
+      if (!response.success && !response.alreadyProcessed) throw new Error('We could not save your preference. Please try again.');
+      if (response.alreadyProcessed) {
+        this.state = 'already-consented';
+      } else {
+        this.submittedWithSms = smsConsent;
+        this.continueUrl = response.unwrapUrl ?? (response.unwrapToken ? `/unwrap/${encodeURIComponent(response.unwrapToken)}` : '');
+        this.state = 'success';
+      }
       this.form.disable();
-    } catch (error) { this.handleError(error, false); }
-    finally { this.submitting = false; }
+    } catch (error) {
+      this.state = 'ready';
+      this.errorMessage = error instanceof Error ? error.message : 'We could not save your preference. Please try again.';
+    } finally {
+      this.submitting = false;
+    }
   }
 
-  private normalizePhone(value: string): string {
-    const digits = value.replace(/\D/g, '');
-    return `+${digits.length === 10 ? `1${digits}` : digits}`;
+  private showInvalidLink(): void {
+    this.errorMessage = 'This consent link is invalid or has expired. Please ask the sender for a new Whisper invitation.';
+    this.state = 'error';
   }
 
-  private handleError(error: unknown, loading: boolean): void {
-    const code = error instanceof SmsConsentApiError ? error.code : 'unknown';
-    if (code === 'expired_consent_link') { this.state = 'expired'; return; }
-    if (code === 'invalid_or_expired_consent_link' && loading) { this.state = 'invalid'; return; }
-    const messages: Record<string, string> = {
-      invalid_or_expired_consent_link: 'This consent link is no longer available.',
-      recipient_phone_mismatch: 'That phone number does not match this invitation. Check the number and try again.',
-      sms_consent_required: 'You must personally agree to SMS messages before continuing.',
-      sms_recipient_suppressed: 'SMS cannot be sent to this number. Contact support if you need help.',
-      rate_limited: 'Too many attempts were made. Please wait and try again.',
-      unknown: 'Please try again later or contact support@whisperwrapapp.org.',
-    };
-    this.errorMessage = messages[code];
-    this.state = loading ? 'error' : 'ready';
+  private showError(error: unknown): void {
+    if (error instanceof Error && error.message !== 'This consent link is invalid or has expired.') {
+      this.errorMessage = error.message;
+    } else {
+      this.errorMessage = 'This consent link is invalid or has expired. Please ask the sender for a new Whisper invitation.';
+    }
+    this.state = 'error';
   }
 }
