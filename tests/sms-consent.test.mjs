@@ -6,6 +6,7 @@ const page = readFileSync('src/app/pages/sms-consent-request.page.ts', 'utf8');
 const service = readFileSync('src/app/services/whisper.service.ts', 'utf8');
 const models = readFileSync('src/app/services/models.ts', 'utf8');
 const routes = readFileSync('src/app/app.routes.ts', 'utf8');
+const interceptor = readFileSync('src/app/services/auth.interceptor.ts', 'utf8');
 const netlify = readFileSync('netlify.toml', 'utf8');
 const allAppSource = [page, service, models, routes,
   readFileSync('src/app/pages/whisper-sent.page.ts', 'utf8')].join('\n');
@@ -33,6 +34,12 @@ test('both declined and granted values are submitted unchanged', () => {
   assert.match(page, /You declined SMS notifications/);
 });
 
+test('phone validation permits blank declines and requires a usable phone for opt-in', () => {
+  assert.match(page, /Validators\.pattern\(\/\^\\s\*\(\?:\\\+\?\[\\d\\s\(\)\.\-\]\{7,25\}\)\?\\s\*\$\/\)/);
+  assert.match(page, /smsConsent && !phoneNumber/);
+  assert.match(page, /this\.form\.controls\.phoneNumber\.invalid/);
+});
+
 test('loading, submitting, and already-consented states are represented', () => {
   assert.match(page, /state === 'loading' \|\| state === 'submitting'/);
   assert.match(page, /if \(this\.submitting \|\| this\.state !== 'ready'\) return/);
@@ -44,6 +51,11 @@ test('public APIs URL-encode tokens and do not request auth headers', () => {
   assert.match(publicMethods, /encodeURIComponent\(token\)/);
   assert.doesNotMatch(publicMethods, /withAuthHeaders/);
   assert.doesNotMatch(publicMethods, /headers/);
+});
+
+test('auth interceptor bypasses the public recipient endpoint', () => {
+  assert.match(interceptor, /\/api\/whispers\/sms-consent\//);
+  assert.match(interceptor, /isPublicRecipientRequest[^]*return next\(req\)/);
 });
 
 test('sender invitation remains authenticated', () => {
@@ -75,4 +87,30 @@ test('direct public route and Netlify fallback are configured', () => {
   assert.match(route, /loadComponent/);
   assert.doesNotMatch(route, /canActivate|authGuard|subscriberGuard/);
   assert.match(netlify, /from = "\/\*"[\s\S]*to = "\/index\.html"[\s\S]*status = 200/);
+});
+
+test('both consent routes precede the wildcard route', () => {
+  assert.ok(routes.indexOf("path: 'sms-consent'") < routes.indexOf("path: '**'"));
+  assert.ok(routes.indexOf("path: 'sms-consent/:token'") < routes.indexOf("path: '**'"));
+});
+
+test('lookup states and continuation response contracts are handled', () => {
+  assert.match(page, /if \(!this\.consent\.valid\)/);
+  assert.match(page, /else if \(this\.consent\.alreadyConsented\)/);
+  assert.match(page, /this\.state = 'ready'/);
+  assert.match(page, /response\.unwrapUrl \?\? \(response\.unwrapToken/);
+  assert.match(page, /encodeURIComponent\(response\.unwrapToken\)/);
+  assert.match(models, /unwrapUrl\?: string/);
+});
+
+test('public error mapping preserves backend consent error distinctions', () => {
+  for (const code of [
+    'invalid_or_expired_consent_link',
+    'recipient_phone_mismatch',
+    'sms_recipient_suppressed',
+    'sms_consent_required',
+    'invalid_request',
+  ]) {
+    assert.match(service, new RegExp(`${code}:`));
+  }
 });
