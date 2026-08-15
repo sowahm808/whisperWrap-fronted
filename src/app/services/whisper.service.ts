@@ -313,6 +313,8 @@ private withAuthHeaders(forceRefresh = false): Observable<HttpHeaders> {
         expired_consent_link: 'This consent link is invalid or has expired.',
         recipient_phone_mismatch: 'The phone number does not match the intended recipient.',
         sms_recipient_suppressed: 'SMS notifications are currently disabled for this phone number.',
+        sms_consent_required: 'SMS consent is required to send an SMS notification.',
+        invalid_request: 'The consent preference could not be saved. Please check the information and try again.',
       };
 
       if (messages[code]) {

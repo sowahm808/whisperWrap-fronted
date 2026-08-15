@@ -138,6 +138,7 @@ export interface SmsConsentLookupResponse {
   senderName: string;
   maskedPhone: string | null;
   alreadyConsented: boolean;
+  unwrapUrl?: string;
   disclosureVersion?: string;
   disclosureText?: string;
   privacyVersion?: string;

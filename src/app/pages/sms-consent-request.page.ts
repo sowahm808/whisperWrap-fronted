@@ -96,7 +96,7 @@ export class SmsConsentRequestPage implements OnInit {
   errorMessage = '';
   phoneError = '';
   readonly form = this.fb.nonNullable.group({
-    phoneNumber: ['', Validators.pattern(/^\s*(?:|(?:\+?[\d\s().-]{7,}))\s*$/)],
+    phoneNumber: ['', Validators.pattern(/^\s*(?:\+?[\d\s().-]{7,25})?\s*$/)],
     smsConsent: false,
   });
 
